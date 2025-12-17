@@ -43,18 +43,13 @@ pub fn calculate_all_zero_passes(rotations: List(Int)) -> Int {
     rotations
     |> list.fold(#(starting_position, 0), fn(acc, rotation) {
       let #(current_pos, zero_passes) = acc
-      let #(new_pos, new_zero_passes) = passes_start(current_pos, rotation)
-      #(new_pos, zero_passes + new_zero_passes)
+      count_passes(current_pos, rotation, zero_passes)
     })
 
   zero_passes
 }
 
-pub fn passes_start(current_pos: Int, rotation: Int) -> #(Int, Int) {
-  passes(current_pos, rotation, 0)
-}
-
-pub fn passes(
+pub fn count_passes(
   current_pos: Int,
   rotation: Int,
   current_passes: Int,
@@ -62,16 +57,16 @@ pub fn passes(
   let neg_steps = int.negate(num_steps)
   case rotation {
     rot if rot > neg_steps && rot < num_steps -> {
-      let #(new_pos, zero_passes) = passy(current_pos, rotation)
+      let #(new_pos, zero_passes) = rotate_with_zero_pass(current_pos, rotation)
       #(new_pos, zero_passes + current_passes)
     }
     rot if rot <= neg_steps ->
-      passes(current_pos, rotation + num_steps, current_passes + 1)
-    _rot -> passes(current_pos, rotation - num_steps, current_passes + 1)
+      count_passes(current_pos, rotation + num_steps, current_passes + 1)
+    _rot -> count_passes(current_pos, rotation - num_steps, current_passes + 1)
   }
 }
 
-pub fn passy(current_pos: Int, rotation: Int) -> #(Int, Int) {
+pub fn rotate_with_zero_pass(current_pos: Int, rotation: Int) -> #(Int, Int) {
   let new_pos = current_pos + rotation
 
   let zero_pos_pass = case current_pos == 0 {
