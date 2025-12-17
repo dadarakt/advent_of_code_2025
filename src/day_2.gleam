@@ -9,19 +9,30 @@ pub type Range {
   Range(from: Int, to: Int)
 }
 
-pub fn sum_invalid_ids_in_ranges(ranges: List(Range)) -> Int {
+pub fn sum_invalid_ids_in_ranges(
+  ranges: List(Range),
+  invalid_id_fun: fn(Int) -> Bool,
+) -> Int {
   ranges
-  |> list.fold(0, fn(acc, range) { acc + sum_invalid_ids_in_range(range) })
+  |> list.fold(0, fn(acc, range) {
+    acc + sum_invalid_ids_in_range(range, invalid_id_fun)
+  })
 }
 
-pub fn sum_invalid_ids_in_range(range: Range) -> Int {
-  invalid_ids_in_range(range)
+pub fn sum_invalid_ids_in_range(
+  range: Range,
+  invalid_id_fun: fn(Int) -> Bool,
+) -> Int {
+  invalid_ids_in_range(range, invalid_id_fun)
   |> list.fold(0, fn(acc, id) { acc + id })
 }
 
-pub fn invalid_ids_in_range(range: Range) -> List(Int) {
+pub fn invalid_ids_in_range(
+  range: Range,
+  invalid_id_fun: fn(Int) -> Bool,
+) -> List(Int) {
   enumerate_range(range)
-  |> list.filter(made_of_two_same_numbers)
+  |> list.filter(invalid_id_fun)
 }
 
 fn enumerate_range(range: Range) -> List(Int) {
@@ -51,6 +62,33 @@ pub fn made_of_two_same_numbers(number: Int) -> Bool {
     _n -> {
       let #(first, second) = list.split(graphemes, len / 2)
       first == second
+    }
+  }
+}
+
+pub fn made_of_repeated_numbers(number: Int) {
+  let digits = number_to_digits(number)
+  made_of_repeated_numbers_recursion(digits, 1)
+}
+
+fn made_of_repeated_numbers_recursion(
+  digits: List(Int),
+  pattern_length: Int,
+) -> Bool {
+  let len = list.length(digits)
+
+  case pattern_length > list.length(digits) / 2 {
+    True -> False
+    False -> {
+      case len % pattern_length == 0 {
+        False -> made_of_repeated_numbers_recursion(digits, pattern_length + 1)
+        True -> {
+          let assert [chunk, ..other_chunks] =
+            list.sized_chunk(digits, pattern_length)
+          list.all(other_chunks, fn(other_chunk) { other_chunk == chunk })
+          || made_of_repeated_numbers_recursion(digits, pattern_length + 1)
+        }
+      }
     }
   }
 }

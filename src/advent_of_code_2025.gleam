@@ -13,9 +13,17 @@ pub fn main() -> Nil {
 
   io.println("=========== Day 02 ===========")
   let ranges = day_2.parse_input_from_file("inputs/day_2.txt")
-  let sum = day_2.sum_invalid_ids_in_ranges(ranges)
+  let sum =
+    day_2.sum_invalid_ids_in_ranges(ranges, day_2.made_of_two_same_numbers)
 
   io.println("The sum of invalid IDs: " <> int.to_string(sum))
+
+  let sum_of_repeated =
+    day_2.sum_invalid_ids_in_ranges(ranges, day_2.made_of_repeated_numbers)
+
+  io.println(
+    "The sum of even more invalid IDs: " <> int.to_string(sum_of_repeated),
+  )
 
   Nil
 }

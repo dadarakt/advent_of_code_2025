@@ -63,9 +63,51 @@ pub fn made_of_two_numbers_test() {
   assert True == day_2.made_of_two_same_numbers(123_123_123_123)
 }
 
+pub fn made_of_repeated_numbers_test() {
+  assert True == day_2.made_of_repeated_numbers(121_212)
+  assert False == day_2.made_of_repeated_numbers(2_121_212_118)
+  assert True == day_2.made_of_repeated_numbers(38_593_859)
+}
+
 pub fn invalid_in_range_test() {
-  assert [11, 22] == day_2.invalid_ids_in_range(day_2.Range(11, 22))
-  assert [99] == day_2.invalid_ids_in_range(day_2.Range(95, 115))
+  assert [11, 22]
+    == day_2.invalid_ids_in_range(
+      day_2.Range(11, 22),
+      day_2.made_of_two_same_numbers,
+    )
+  assert [99]
+    == day_2.invalid_ids_in_range(
+      day_2.Range(95, 115),
+      day_2.made_of_two_same_numbers,
+    )
   assert [1_188_511_885]
-    == day_2.invalid_ids_in_range(day_2.Range(1_188_511_880, 1_188_511_890))
+    == day_2.invalid_ids_in_range(
+      day_2.Range(1_188_511_880, 1_188_511_890),
+      day_2.made_of_two_same_numbers,
+    )
+  assert [2_121_212_121]
+    == day_2.invalid_ids_in_range(
+      day_2.Range(2_121_212_118, 2_121_212_124),
+      day_2.made_of_repeated_numbers,
+    )
+  assert [11, 22]
+    == day_2.invalid_ids_in_range(
+      day_2.Range(11, 22),
+      day_2.made_of_repeated_numbers,
+    )
+  assert [99, 111]
+    == day_2.invalid_ids_in_range(
+      day_2.Range(95, 115),
+      day_2.made_of_repeated_numbers,
+    )
+  assert [999, 1010]
+    == day_2.invalid_ids_in_range(
+      day_2.Range(998, 1012),
+      day_2.made_of_repeated_numbers,
+    )
+  assert [38_593_859]
+    == day_2.invalid_ids_in_range(
+      day_2.Range(38_593_856, 38_593_862),
+      day_2.made_of_repeated_numbers,
+    )
 }
