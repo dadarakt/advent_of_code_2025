@@ -42,8 +42,14 @@ pub fn rotate_test() {
   assert 12 == day_1.rotate(12, 200)
 }
 
+pub fn zero_stops_test() {
+  let rotations = day_1.parse_rotations(test_inputs)
+  let zero_stops = day_1.calculate_zero_stops(rotations)
+  assert 3 == zero_stops
+}
+
 pub fn zero_passes_test() {
   let rotations = day_1.parse_rotations(test_inputs)
-  let zero_passes = day_1.calculate_0_passes(rotations)
-  assert 3 == zero_passes
+  let zero_passes = day_1.calculate_all_zero_passes(rotations)
+  assert 6 == zero_passes
 }
