@@ -1,0 +1,108 @@
+import gleam/int
+import gleam/list
+import gleam/option
+import gleam/regexp
+import gleam/string
+import simplifile
+
+pub type Range {
+  Range(from: Int, to: Int)
+}
+
+pub fn sum_invalid_ids_in_ranges(ranges: List(Range)) -> Int {
+  ranges
+  |> list.fold(0, fn(acc, range) { acc + sum_invalid_ids_in_range(range) })
+}
+
+pub fn sum_invalid_ids_in_range(range: Range) -> Int {
+  invalid_ids_in_range(range)
+  |> list.fold(0, fn(acc, id) { acc + id })
+}
+
+pub fn invalid_ids_in_range(range: Range) -> List(Int) {
+  enumerate_range(range)
+  |> list.filter(made_of_two_same_numbers)
+}
+
+fn enumerate_range(range: Range) -> List(Int) {
+  enumerate_range_loop(range, range.from)
+}
+
+fn enumerate_range_loop(range: Range, idx: Int) -> List(Int) {
+  case idx > range.to {
+    True -> []
+    False -> {
+      [idx, ..enumerate_range_loop(range, idx + 1)]
+    }
+  }
+}
+
+pub fn is_valid_id(number: Int) -> Bool {
+  let digits = number_to_digits(number)
+  !has_duplicate_loop(digits, 1)
+}
+
+pub fn made_of_two_same_numbers(number: Int) -> Bool {
+  let str = int.to_string(number)
+  let graphemes = string.to_graphemes(str)
+  let len = list.length(graphemes)
+  case len {
+    n if n % 2 == 1 -> False
+    _n -> {
+      let #(first, second) = list.split(graphemes, len / 2)
+      first == second
+    }
+  }
+}
+
+pub fn has_duplicate_loop(digits: List(Int), length: Int) -> Bool {
+  case length / 2 > list.length(digits) {
+    True -> False
+    False -> {
+      has_duplicate_of_length(digits, length)
+      || has_duplicate_loop(digits, length + 1)
+    }
+  }
+}
+
+pub fn has_duplicate_of_length(digits: List(Int), length: Int) {
+  list.window(digits, length * 2)
+  |> list.any(fn(slice) {
+    let #(first, second) = list.split(slice, length)
+    first == second
+  })
+}
+
+pub fn number_to_digits(number: Int) -> List(Int) {
+  number_to_digits_loop(number, [])
+  |> list.reverse
+}
+
+fn number_to_digits_loop(number: Int, current_digits: List(Int)) -> List(Int) {
+  case number {
+    n if n < 10 -> [n, ..current_digits]
+    n -> {
+      let assert Ok(digit) = int.modulo(n, 10)
+      let assert Ok(rest) = int.divide(n, 10)
+      [digit, ..number_to_digits_loop(rest, current_digits)]
+    }
+  }
+}
+
+pub fn parse_input_from_file(filepath: String) -> List(Range) {
+  let assert Ok(file_content) = simplifile.read(from: filepath)
+  parse_input(file_content)
+}
+
+pub fn parse_input(input: String) -> List(Range) {
+  let assert Ok(regex) = regexp.from_string("([0-9]+)-([0-9]+)")
+  regexp.scan(regex, input)
+  |> list.map(fn(m) {
+    let assert [from, to] = m.submatches
+    let assert option.Some(from) = from
+    let assert option.Some(to) = to
+    let assert Ok(from) = int.parse(from)
+    let assert Ok(to) = int.parse(to)
+    Range(from, to)
+  })
+}

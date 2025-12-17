@@ -1,4 +1,5 @@
 import day_1
+import day_2
 import gleam/int
 import gleam/io
 
@@ -11,6 +12,10 @@ pub fn main() -> Nil {
   io.println("Zero passes : " <> int.to_string(zero_passes))
 
   io.println("=========== Day 02 ===========")
+  let ranges = day_2.parse_input_from_file("inputs/day_2.txt")
+  let sum = day_2.sum_invalid_ids_in_ranges(ranges)
+
+  io.println("The sum of invalid IDs: " <> int.to_string(sum))
 
   Nil
 }
