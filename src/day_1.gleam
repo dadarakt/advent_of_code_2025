@@ -1,4 +1,5 @@
 import gleam/int
+import gleam/io
 import gleam/list
 import gleam/result
 import gleam/string
@@ -7,6 +8,14 @@ import simplifile
 const starting_position = 50
 
 const num_steps = 100
+
+pub fn main() -> Nil {
+  let rotations = parse_input_from_file("inputs/day_1.txt")
+  let zero_stops = calculate_zero_stops(rotations)
+  io.println("Stopped at zero: " <> int.to_string(zero_stops))
+  let zero_passes = calculate_all_zero_passes(rotations)
+  io.println("Zero passes : " <> int.to_string(zero_passes))
+}
 
 pub fn calculate_zero_stops(rotations: List(Int)) -> Int {
   let log_file = "inputs/day_1_log.txt"

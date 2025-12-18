@@ -1,4 +1,5 @@
 import gleam/int
+import gleam/io
 import gleam/list
 import gleam/option
 import gleam/regexp
@@ -7,6 +8,20 @@ import simplifile
 
 pub type Range {
   Range(from: Int, to: Int)
+}
+
+pub fn main() -> Nil {
+  let ranges = parse_input_from_file("inputs/day_2.txt")
+  let sum = sum_invalid_ids_in_ranges(ranges, made_of_two_same_numbers)
+
+  io.println("The sum of invalid IDs (part 1): " <> int.to_string(sum))
+
+  let sum_of_repeated =
+    sum_invalid_ids_in_ranges(ranges, made_of_repeated_numbers)
+
+  io.println(
+    "The sum of invalid IDs (part 2): " <> int.to_string(sum_of_repeated),
+  )
 }
 
 pub fn sum_invalid_ids_in_ranges(
@@ -76,7 +91,6 @@ fn made_of_repeated_numbers_recursion(
   pattern_length: Int,
 ) -> Bool {
   let len = list.length(digits)
-
   case pattern_length > list.length(digits) / 2 {
     True -> False
     False -> {
