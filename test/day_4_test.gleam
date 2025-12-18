@@ -95,3 +95,8 @@ pub fn update_matrix_test() {
     ]
     == day_4.update_matrix(matrix, #(1, 2), "hurray")
 }
+
+pub fn remove_and_return_test() {
+  let rolls = day_4.parse_rolls(test_input)
+  assert 43 == day_4.count_removable_rolls_repeated(rolls, 0)
+}
