@@ -12,6 +12,13 @@ const test_input = "..@@.@@@@.
 .@@@@@@@@.
 @.@.@@@.@."
 
+const matrix = [
+  ["a_0", "a_1", "a_2", "a_3"],
+  ["b_0", "b_1", "b_2", "b_3"],
+  ["c_0", "c_1", "c_2", "c_3"],
+  ["d_0", "d_1", "d_2", "d_3"],
+]
+
 pub fn parsing_test() {
   let expected = [
     [0, 0, 1, 1, 0, 1, 1, 1, 1, 0],
@@ -29,13 +36,6 @@ pub fn parsing_test() {
 }
 
 pub fn sub_matrix_test() {
-  let matrix = [
-    ["a_0", "a_1", "a_2", "a_3"],
-    ["b_0", "b_1", "b_2", "b_3"],
-    ["c_0", "c_1", "c_2", "c_3"],
-    ["d_0", "d_1", "d_2", "d_3"],
-  ]
-
   assert [["a_0", "a_1", "a_2", "a_3"]]
     == day_4.sub_matrix(matrix, #(0, 0), #(0, 3))
   assert [["d_0", "d_1", "d_2", "d_3"]]
@@ -68,4 +68,30 @@ pub fn sum_matrix_test() {
 pub fn count_rolls_test() {
   let rolls = day_4.parse_rolls(test_input)
   assert 13 == day_4.count_removable_rolls(rolls)
+}
+
+pub fn update_matrix_test() {
+  assert [
+      ["hurray", "a_1", "a_2", "a_3"],
+      ["b_0", "b_1", "b_2", "b_3"],
+      ["c_0", "c_1", "c_2", "c_3"],
+      ["d_0", "d_1", "d_2", "d_3"],
+    ]
+    == day_4.update_matrix(matrix, #(0, 0), "hurray")
+
+  assert [
+      ["a_0", "a_1", "a_2", "a_3"],
+      ["b_0", "b_1", "b_2", "b_3"],
+      ["c_0", "c_1", "c_2", "c_3"],
+      ["d_0", "d_1", "d_2", "hurray"],
+    ]
+    == day_4.update_matrix(matrix, #(3, 3), "hurray")
+
+  assert [
+      ["a_0", "a_1", "a_2", "a_3"],
+      ["b_0", "b_1", "hurray", "b_3"],
+      ["c_0", "c_1", "c_2", "c_3"],
+      ["d_0", "d_1", "d_2", "d_3"],
+    ]
+    == day_4.update_matrix(matrix, #(1, 2), "hurray")
 }
