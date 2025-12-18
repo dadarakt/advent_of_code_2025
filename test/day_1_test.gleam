@@ -19,8 +19,6 @@ pub fn parsing_test() {
   let expected = [-68, -30, 48, -5, 60, -55, -1, -99, 14, -82]
 
   assert expected == parsed_inputs
-
-  day_1.parse_input_from_file("inputs/day_1.txt")
 }
 
 pub fn rotate_test() {

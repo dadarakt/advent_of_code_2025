@@ -3,6 +3,7 @@ import gleam/io
 import gleam/list
 import gleam/result
 import gleam/string
+import inputs
 import simplifile
 
 const starting_position = 50
@@ -10,7 +11,7 @@ const starting_position = 50
 const num_steps = 100
 
 pub fn main() -> Nil {
-  let rotations = parse_input_from_file("inputs/day_1.txt")
+  let rotations = inputs.input_for_day(1, parse_rotations_from_string)
   let zero_stops = calculate_zero_stops(rotations)
   io.println("Stopped at zero: " <> int.to_string(zero_stops))
   let zero_passes = calculate_all_zero_passes(rotations)
@@ -125,9 +126,8 @@ pub fn rotate(current_pos: Int, rotation: Int) -> Int {
   }
 }
 
-pub fn parse_input_from_file(filepath: String) -> List(Int) {
-  let assert Ok(file_content) = simplifile.read(from: filepath)
-  string.split(file_content, "\n")
+pub fn parse_rotations_from_string(input: String) -> List(Int) {
+  string.split(input, "\n")
   |> parse_rotations()
 }
 

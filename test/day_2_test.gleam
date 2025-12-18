@@ -5,7 +5,7 @@ const test_input = "11-22,95-115,998-1012,1188511880-1188511890,222220-222224,
 824824821-824824827,2121212118-2121212124"
 
 pub fn parsing_test() {
-  let parsed_ranges = day_2.parse_input(test_input)
+  let parsed_ranges = day_2.parse_ranges(test_input)
   let expected = [
     day_2.Range(11, 22),
     day_2.Range(95, 115),

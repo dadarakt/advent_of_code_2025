@@ -4,14 +4,14 @@ import gleam/list
 import gleam/option
 import gleam/regexp
 import gleam/string
-import simplifile
+import inputs
 
 pub type Range {
   Range(from: Int, to: Int)
 }
 
 pub fn main() -> Nil {
-  let ranges = parse_input_from_file("inputs/day_2.txt")
+  let ranges = inputs.input_for_day(2, parse_ranges)
   let sum = sum_invalid_ids_in_ranges(ranges, made_of_two_same_numbers)
 
   io.println("The sum of invalid IDs (part 1): " <> int.to_string(sum))
@@ -141,12 +141,7 @@ fn number_to_digits_loop(number: Int, current_digits: List(Int)) -> List(Int) {
   }
 }
 
-pub fn parse_input_from_file(filepath: String) -> List(Range) {
-  let assert Ok(file_content) = simplifile.read(from: filepath)
-  parse_input(file_content)
-}
-
-pub fn parse_input(input: String) -> List(Range) {
+pub fn parse_ranges(input: String) -> List(Range) {
   let assert Ok(regex) = regexp.from_string("([0-9]+)-([0-9]+)")
   regexp.scan(regex, input)
   |> list.map(fn(m) {
