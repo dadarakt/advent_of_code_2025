@@ -19,7 +19,7 @@ pub fn main() -> Nil {
   // part 2
   let sum_12 = sum_joltages(banks, 12)
   io.println(
-    "The summed maximal joltage of length 10 is: " <> int.to_string(sum_12),
+    "The summed maximal joltage of length 12 is: " <> int.to_string(sum_12),
   )
 
   Nil
@@ -39,17 +39,18 @@ pub fn parse_banks_from_string(input: String) -> List(Int) {
 
 pub fn largest_joltage_for_bank_int(bank: Int, n: Int) -> Int {
   day_2.number_to_digits(bank)
-  |> largest_n_values(n, 0)
+  |> largest_n_value_sum(n, 0)
 }
 
-pub fn largest_n_values(bank: List(Int), n: Int, sum: Int) -> Int {
+pub fn largest_n_value_sum(bank: List(Int), n: Int, sum: Int) -> Int {
   case n {
     0 -> sum
     n -> {
       let bank_with_reserved_end = list.take(bank, list.length(bank) - n + 1)
       let #(max, idx) = find_max_with_idx(bank_with_reserved_end)
       let factor = list.repeat(10, n - 1) |> list.fold(1, fn(a, b) { a * b })
-      factor * max + largest_n_values(list.drop(bank, idx + 1), n - 1, sum)
+      let bank_after_idx = list.drop(bank, idx + 1)
+      factor * max + largest_n_value_sum(bank_after_idx, n - 1, sum)
     }
   }
 }
