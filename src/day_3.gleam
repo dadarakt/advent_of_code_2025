@@ -1,4 +1,3 @@
-import gleam/dynamic/decode
 import gleam/int
 import gleam/io
 import gleam/list
@@ -28,10 +27,29 @@ pub fn largest_joltage_for_bank_int(bank: Int) -> Int {
   echo bank
   let joltage =
     day_2.number_to_digits(bank)
-    |> largest_joltage_for_bank
+    |> largest_alternative
 
   echo joltage
   joltage
+}
+
+pub fn largest_alternative(bank: List(Int)) -> Int {
+  let #(first, first_idx) =
+    list.index_fold(
+      list.take(bank, list.length(bank) - 1),
+      #(0, 0),
+      fn(acc, item, index) {
+        let #(max, _idx) = acc
+        case item > max {
+          True -> #(item, index)
+          False -> acc
+        }
+      },
+    )
+
+  let assert Ok(second) = list.max(list.drop(bank, first_idx + 1), int.compare)
+
+  first * 10 + second
 }
 
 pub fn largest_joltage_for_bank(bank: List(Int)) -> Int {

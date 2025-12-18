@@ -1,5 +1,5 @@
-import day_2
 import day_3
+import gleam/list
 
 const test_input = "
 987654321111111
@@ -63,4 +63,6 @@ pub fn list_matching_exploration_test() {
   assert 1 == head
   assert 2 == second
   assert [3] == rest
+
+  let assert [2] = list.drop([3, 2], 0 + 1)
 }
