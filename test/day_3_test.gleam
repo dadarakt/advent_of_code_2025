@@ -1,5 +1,4 @@
 import day_3
-import gleam/list
 
 const test_input = "
 987654321111111

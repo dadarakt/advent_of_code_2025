@@ -50,7 +50,7 @@ pub fn invalid_ids_in_range(
   |> list.filter(invalid_id_fun)
 }
 
-fn enumerate_range(range: Range) -> List(Int) {
+pub fn enumerate_range(range: Range) -> List(Int) {
   enumerate_range_loop(range, range.from)
 }
 
