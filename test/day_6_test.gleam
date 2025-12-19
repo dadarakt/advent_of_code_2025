@@ -3,7 +3,8 @@ import day_6
 const test_input = "123 328  51 64 
  45 64  387 23 
   6 98  215 314
-*   +   *   +  "
+*   +   *   +  
+  "
 
 pub fn parsing_test() {
   let worksheet = day_6.parse_worksheet(test_input)
@@ -15,4 +16,9 @@ pub fn parsing_test() {
       day_6.Problem([64, 23, 314], day_6.Add),
     ]
     == worksheet.problems
+}
+
+pub fn grand_total_test() {
+  let worksheet = day_6.parse_worksheet(test_input)
+  assert 4_277_556 == day_6.sum_worksheet_solutions(worksheet)
 }
