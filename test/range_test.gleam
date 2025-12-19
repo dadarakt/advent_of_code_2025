@@ -27,3 +27,61 @@ pub fn from_string_test() {
   assert range.Range(0, 1) == range.from_string("0-1")
   assert range.Range(102_010, 111_111) == range.from_string("102010-111111")
 }
+
+pub fn enumerate_test() {
+  assert [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    == range.enumerate(range.Range(0, 10))
+  assert [1] == range.enumerate(range.Range(1, 1))
+}
+
+pub fn in_range_test() {
+  assert False == range.in_range(range.Range(0, 10), -5)
+  assert True == range.in_range(range.Range(0, 10), 0)
+  assert True == range.in_range(range.Range(0, 10), 5)
+  assert True == range.in_range(range.Range(0, 10), 10)
+  assert False == range.in_range(range.Range(0, 10), 15)
+}
+
+pub fn merge_test() {
+  assert Ok(range.Range(0, 10))
+    == range.try_merge(range.Range(0, 10), range.Range(0, 10))
+  assert Ok(range.Range(0, 10))
+    == range.try_merge(range.Range(0, 10), range.Range(0, 5))
+  assert Ok(range.Range(0, 10))
+    == range.try_merge(range.Range(0, 5), range.Range(0, 10))
+  assert Ok(range.Range(1, 10))
+    == range.try_merge(range.Range(1, 5), range.Range(6, 10))
+  assert Error(Nil) == range.try_merge(range.Range(1, 3), range.Range(6, 10))
+  assert Ok(range.Range(1, 10))
+    == range.try_merge(range.Range(1, 10), range.Range(2, 5))
+  assert Ok(range.Range(1, 10))
+    == range.try_merge(range.Range(1, 10), range.Range(2, 10))
+  assert Ok(range.Range(1, 12))
+    == range.try_merge(range.Range(1, 10), range.Range(2, 12))
+}
+
+pub fn merge_ranges_test() {
+  assert [] == range.merge_ranges([])
+  assert [range.Range(0, 1)] == range.merge_ranges([range.Range(0, 1)])
+  assert [range.Range(0, 10)]
+    == range.merge_ranges([
+      range.Range(1, 5),
+      range.Range(4, 10),
+      range.Range(0, 3),
+    ])
+}
+
+pub fn overlap_test() {
+  assert False == range.are_disjoint(range.Range(10, 14), range.Range(12, 20))
+  assert True
+    == range.are_disjoint(
+      range.Range(123_733_999_511_819, 129_097_742_451_553),
+      range.Range(72_457_259_933_919, 73_006_486_209_179),
+    )
+
+  assert False
+    == range.are_disjoint(
+      range.Range(447_751_758_628_882, 448_426_894_178_436),
+      range.Range(447_751_758_628_882, 447_890_076_574_460),
+    )
+}

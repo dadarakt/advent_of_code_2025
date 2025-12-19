@@ -2,14 +2,13 @@ import gleam/int
 import gleam/io
 import gleam/list
 import gleam/result
-import gleam/set
 import gleam/string
 
 import inputs
 import range
 
 pub type Ingredients {
-  Ingredients(fresh: set.Set(Int), available: set.Set(Int))
+  Ingredients(fresh: List(range.Range), available: List(Int))
 }
 
 pub fn main() {
@@ -18,8 +17,13 @@ pub fn main() {
 
   io.println(
     "There are "
-    <> set.size(fresh_ingredients) |> int.to_string()
-    <> " fresh ingredients",
+    <> list.length(fresh_ingredients) |> int.to_string()
+    <> " fresh ingredients among the available",
+  )
+
+  let count = count_fresh_ingredients(ingredients)
+  io.println(
+    "There are " <> count |> int.to_string() <> " possible fresh ingredients",
   )
   Nil
 }
@@ -33,32 +37,37 @@ pub fn parse_ingredients(input: String) -> Ingredients {
   Ingredients(parse_and_unfold_ranges(fresh_ranges), parse_ints(available))
 }
 
-pub fn fresh_ingredients(ingredients: Ingredients) -> set.Set(Int) {
-  set.intersection(ingredients.available, ingredients.fresh)
+pub fn fresh_ingredients(ingredients: Ingredients) -> List(Int) {
+  ingredients.available
+  |> list.filter(fn(i) {
+    ingredients.fresh |> list.any(fn(r) { range.in_range(r, i) })
+  })
 }
 
-fn parse_and_unfold_ranges(input: List(String)) -> set.Set(Int) {
+pub fn count_fresh_ingredients(ingredients: Ingredients) -> Int {
+  let merged_ranges = ingredients.fresh |> range.merge_until_no_overlap()
+  assert all_disjoint(merged_ranges)
+
+  merged_ranges
+  |> list.fold(0, fn(acc, r) { acc + range.size(r) })
+}
+
+fn all_disjoint(ranges: List(range.Range)) -> Bool {
+  list.combination_pairs(ranges)
+  list.window_by_2(ranges)
+  |> list.all(fn(t) {
+    let #(a, b) = t
+    range.are_disjoint(a, b)
+  })
+}
+
+fn parse_and_unfold_ranges(input: List(String)) -> List(range.Range) {
   input
   |> list.flat_map(range.all_from_string)
-  |> list.fold(set.new(), add_range_to_set)
 }
 
-fn add_range_to_set(set: set.Set(Int), range: range.Range) -> set.Set(Int) {
-  add_range_to_set_loop(set, range.from, range.to)
-}
-
-fn add_range_to_set_loop(set: set.Set(Int), from: Int, to: Int) -> set.Set(Int) {
-  case from > to {
-    True -> set
-    False -> {
-      add_range_to_set_loop(set.insert(set, from), from + 1, to)
-    }
-  }
-}
-
-fn parse_ints(input: List(String)) -> set.Set(Int) {
+fn parse_ints(input: List(String)) -> List(Int) {
   input
   |> list.map(int.parse)
   |> result.values
-  |> set.from_list()
 }
