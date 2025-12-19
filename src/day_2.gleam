@@ -1,17 +1,13 @@
 import gleam/int
 import gleam/io
 import gleam/list
-import gleam/option
-import gleam/regexp
 import gleam/string
-import inputs
 
-pub type Range {
-  Range(from: Int, to: Int)
-}
+import inputs
+import range.{type Range}
 
 pub fn main() -> Nil {
-  let ranges = inputs.input_for_day(2, parse_ranges)
+  let ranges = inputs.input_for_day(2, range.all_from_string)
   let sum = sum_invalid_ids_in_ranges(ranges, made_of_two_same_numbers)
 
   io.println("The sum of invalid IDs (part 1): " <> int.to_string(sum))
@@ -46,21 +42,8 @@ pub fn invalid_ids_in_range(
   range: Range,
   invalid_id_fun: fn(Int) -> Bool,
 ) -> List(Int) {
-  enumerate_range(range)
+  range.enumerate(range)
   |> list.filter(invalid_id_fun)
-}
-
-pub fn enumerate_range(range: Range) -> List(Int) {
-  enumerate_range_loop(range, range.from)
-}
-
-fn enumerate_range_loop(range: Range, idx: Int) -> List(Int) {
-  case idx > range.to {
-    True -> []
-    False -> {
-      [idx, ..enumerate_range_loop(range, idx + 1)]
-    }
-  }
 }
 
 pub fn is_valid_id(number: Int) -> Bool {
@@ -139,17 +122,4 @@ fn number_to_digits_loop(number: Int, current_digits: List(Int)) -> List(Int) {
       [digit, ..number_to_digits_loop(rest, current_digits)]
     }
   }
-}
-
-pub fn parse_ranges(input: String) -> List(Range) {
-  let assert Ok(regex) = regexp.from_string("([0-9]+)-([0-9]+)")
-  regexp.scan(regex, input)
-  |> list.map(fn(m) {
-    let assert [from, to] = m.submatches
-    let assert option.Some(from) = from
-    let assert option.Some(to) = to
-    let assert Ok(from) = int.parse(from)
-    let assert Ok(to) = int.parse(to)
-    Range(from, to)
-  })
 }
