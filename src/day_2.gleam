@@ -4,7 +4,7 @@ import gleam/list
 import gleam/string
 
 import inputs
-import range.{type Range}
+import range
 
 pub fn main() -> Nil {
   let ranges = inputs.input_for_day(2, range.all_from_string)
@@ -21,7 +21,7 @@ pub fn main() -> Nil {
 }
 
 pub fn sum_invalid_ids_in_ranges(
-  ranges: List(Range),
+  ranges: List(range.Range),
   invalid_id_fun: fn(Int) -> Bool,
 ) -> Int {
   ranges
@@ -31,7 +31,7 @@ pub fn sum_invalid_ids_in_ranges(
 }
 
 pub fn sum_invalid_ids_in_range(
-  range: Range,
+  range: range.Range,
   invalid_id_fun: fn(Int) -> Bool,
 ) -> Int {
   invalid_ids_in_range(range, invalid_id_fun)
@@ -39,7 +39,7 @@ pub fn sum_invalid_ids_in_range(
 }
 
 pub fn invalid_ids_in_range(
-  range: Range,
+  range: range.Range,
   invalid_id_fun: fn(Int) -> Bool,
 ) -> List(Int) {
   range.enumerate(range)
