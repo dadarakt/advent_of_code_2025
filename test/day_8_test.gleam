@@ -72,5 +72,11 @@ pub fn merge_circuits_test() {
 
 pub fn connect_closest_circuits_test() {
   let circuits = day_8.parse_circuits(test_input)
-  echo day_8.connect_closest_circuits(circuits, 1)
+  echo day_8.connect_closest_circuits(circuits, 10, 0.0)
+    |> list.map(fn(c) { list.length(c.junction_boxes) })
+}
+
+pub fn closest_circuits_by_boxes_test() {
+  let circuits = day_8.parse_circuits(test_input)
+  day_8.find_closest_junction_boxes(circuits, 0.0)
 }

@@ -10,8 +10,7 @@ pub type Circuit {
   Circuit(junction_boxes: List(Point3D))
 }
 
-fn circuit_distance(circuits: #(Circuit, Circuit)) -> Result(Float, Nil) {
-  let #(a, b) = circuits
+fn circuit_distance(a: Circuit, b: Circuit) -> Result(Float, Nil) {
   case a.junction_boxes |> list.is_empty || b.junction_boxes |> list.is_empty {
     True -> Error(Nil)
     False -> {
@@ -50,9 +49,49 @@ pub fn main() {
   echo min_circuit_b
 }
 
+const unreasonable_number = 1_000_000_000_000.0
+
+pub fn find_closest_junction_boxes(
+  circuits: List(Circuit),
+  min_distance: Float,
+) -> Result(#(#(Circuit, Circuit), Float), Nil) {
+  case circuits {
+    [] -> Error(Nil)
+    [c] -> Ok(#(#(c, c), min_distance))
+    circuits -> {
+      let assert Ok(#(#(p_a, c_a), #(p_b, c_b))) =
+        list.flat_map(circuits, fn(c) {
+          c.junction_boxes
+          |> list.map(fn(b) { #(b, c) })
+        })
+        |> list.combination_pairs()
+        |> min_of_list(fn(a, b) {
+          let #(#(a1, _), #(a2, _)) = a
+          let #(#(b1, _), #(b2, _)) = b
+
+          let dist_a = point_3d.distance(a1, a2)
+          let dist_a = case dist_a >. min_distance {
+            True -> dist_a
+            False -> unreasonable_number
+          }
+          let dist_b = point_3d.distance(b1, b2)
+          let dist_b = case dist_b >. min_distance {
+            True -> dist_b
+            False -> unreasonable_number
+          }
+
+          float.compare(dist_a, dist_b)
+        })
+
+      Ok(#(#(c_a, c_b), point_3d.distance(p_a, p_b)))
+    }
+  }
+}
+
 pub fn connect_closest_circuits(
   circuits: List(Circuit),
   n: Int,
+  min_dist: Float,
 ) -> List(Circuit) {
   case n {
     0 -> circuits
@@ -61,7 +100,8 @@ pub fn connect_closest_circuits(
         [] -> []
         [_circuit] as circuits -> circuits
         circuits -> {
-          let assert Ok(#(min_a, min_b)) = find_closest_circuits(circuits)
+          let assert Ok(#(#(min_a, min_b), new_min_dist)) =
+            find_closest_junction_boxes(circuits, min_dist)
 
           let merged_circuit = merge_circuits(min_a, min_b)
 
@@ -70,7 +110,7 @@ pub fn connect_closest_circuits(
             |> list.filter(fn(c) { c != min_a && c != min_b })
             |> list.prepend(merged_circuit)
 
-          connect_closest_circuits(updated_circuits, n - 1)
+          connect_closest_circuits(updated_circuits, n - 1, new_min_dist)
         }
       }
     }
@@ -78,7 +118,10 @@ pub fn connect_closest_circuits(
 }
 
 pub fn merge_circuits(a: Circuit, b: Circuit) -> Circuit {
-  Circuit(list.append(a.junction_boxes, b.junction_boxes))
+  case a == b {
+    True -> a
+    False -> Circuit(list.append(a.junction_boxes, b.junction_boxes))
+  }
 }
 
 pub fn parse_circuits(str: String) -> List(Circuit) {
@@ -92,7 +135,8 @@ pub fn find_closest_circuits(
   circuits
   |> list.combination_pairs()
   |> list.flat_map(fn(t) {
-    case circuit_distance(t) {
+    let #(a, b) = t
+    case circuit_distance(a, b) {
       Ok(dist) -> [#(dist, t)]
       Error(Nil) -> []
     }
