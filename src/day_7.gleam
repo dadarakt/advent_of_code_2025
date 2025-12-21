@@ -13,12 +13,12 @@ pub fn main() {
   )
 }
 
-pub type Manifold {
-  Empty
-  Input(col: Int, next: Manifold)
-  Splitter(left: Manifold, right: Manifold)
-  Terminal(col: Int)
-}
+//pub type Manifold {
+//  Empty
+//  Input(col: Int, next: Manifold)
+//  Splitter(left: Manifold, right: Manifold)
+//  Terminal(col: Int)
+//}
 
 pub type ParsingState {
   ParsingState(beams: set.Set(Int), splits: Int)
