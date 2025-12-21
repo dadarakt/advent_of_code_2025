@@ -1,6 +1,3 @@
-import gleam/dict
-import gleam/list
-
 const test_input = ".......S.......
 ...............
 .......^.......
@@ -25,11 +22,7 @@ pub fn parse_manifold_test() {
   assert 21 == state.splits
 }
 
-pub fn count_beam_permutations_test() {
-  assert 40 == day_7.parse_manifold(test_input)
-}
-
 pub fn concstruct_manifold_tree_test() {
   let tree = day_7.construct_manifold_tree(test_input)
-  assert 40 == day_7.count_permutations(tree)
+  assert 40 == tree.permutations
 }

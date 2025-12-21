@@ -16,9 +16,10 @@ pub fn main() {
   )
 
   let tree = inputs.input_for_day(7, construct_manifold_tree)
-  let permutations = count_permutations(tree)
 
-  io.println("There are " <> int.to_string(permutations) <> " possible beams")
+  io.println(
+    "There are " <> int.to_string(tree.permutations) <> " possible beams",
+  )
 }
 
 pub type Manifold {
@@ -33,15 +34,6 @@ pub type ParseManifoldState {
     beams: set.Set(Int),
     beams_to_node: dict.Dict(Int, Manifold),
   )
-}
-
-pub fn parse_manifold(str: String) {
-  str
-  |> string.split("\n")
-  |> list.map(parse_manifold_line)
-  |> list.index_map(fn(x, i) { #(i, x) })
-  |> dict.from_list()
-  |> count_beam_permutations()
 }
 
 /// construct tree from bottom up
@@ -87,16 +79,6 @@ pub fn construct_manifold_tree(input: String) -> Manifold {
   start
 }
 
-pub fn count_permutations(m: Manifold) -> Int {
-  case m {
-    Start(_, _, child) -> count_permutations(child)
-    Splitter(_, _, left, right) ->
-      count_permutations(left) + count_permutations(right)
-    Terminal(_, permutations) -> permutations
-    Empty(_, permutations) -> permutations
-  }
-}
-
 fn construct_manifold_tree_loop(
   manifolds: dict.Dict(Int, Manifold),
   layers: List(List(Manifold)),
@@ -136,35 +118,6 @@ fn connect_children(
       Splitter(split_col, left.permutations + right.permutations, left, right)
     }
     t -> t
-  }
-}
-
-fn count_beam_permutations(
-  manifold_dict: dict.Dict(Int, dict.Dict(Int, Manifold)),
-) -> Int {
-  let assert Ok(first) = dict.get(manifold_dict, 0)
-  let assert [Start(col, _, _)] = dict.values(first)
-
-  count_permutation_loop(col, 0, manifold_dict)
-}
-
-fn count_permutation_loop(
-  col: Int,
-  depth: Int,
-  manifold_dict: dict.Dict(Int, dict.Dict(Int, Manifold)),
-) -> Int {
-  case dict.get(manifold_dict, depth) {
-    Error(_) -> 1
-    Ok(row_dict) -> {
-      case dict.get(row_dict, col) {
-        Ok(Splitter(_, _, _, _)) -> {
-          count_permutation_loop(col - 1, depth + 1, manifold_dict)
-          + count_permutation_loop(col + 1, depth + 1, manifold_dict)
-        }
-        Ok(_) | Error(_) ->
-          count_permutation_loop(col, depth + 1, manifold_dict)
-      }
-    }
   }
 }
 
