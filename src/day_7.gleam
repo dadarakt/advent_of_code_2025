@@ -2,7 +2,6 @@ import gleam/dict
 import gleam/int
 import gleam/io
 import gleam/list
-import gleam/result
 import gleam/set
 import gleam/string
 
@@ -22,6 +21,7 @@ pub fn main() {
   )
 }
 
+/// Tree structure to hold parsed manifold
 pub type Manifold {
   Start(col: Int, permutations: Int, next: Manifold)
   Splitter(col: Int, permutations: Int, left: Manifold, right: Manifold)
@@ -37,7 +37,8 @@ pub type ParseManifoldState {
 }
 
 /// construct tree from bottom up
-/// calculate the terminal beams, and trace them up, allowing to reference 
+/// calculate the terminal beams, and trace them up, allowing to reference children
+/// at the same time, possible permutations down the tree are counted up
 pub fn construct_manifold_tree(input: String) -> Manifold {
   let state = count_splits(input)
 
