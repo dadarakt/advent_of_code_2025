@@ -1,4 +1,3 @@
-import gleam/dynamic/decode
 import gleam/int
 import gleam/io
 import gleam/list
@@ -48,77 +47,6 @@ pub fn solve_problem(problem: Problem) -> Int {
   }
 }
 
-pub fn map_worksheet_to_cephalopod(worksheet: Worksheet) -> Worksheet {
-  let cephalopod_problems =
-    worksheet.problems
-    |> list.map(map_problem_to_cephalopod)
-
-  Worksheet(cephalopod_problems)
-}
-
-fn map_problem_to_cephalopod(problem: Problem) -> Problem {
-  Problem(..problem, arguments: args_to_cephalopod(problem.arguments))
-}
-
-pub fn args_to_cephalopod(args: List(Int)) -> List(Int) {
-  let arg_digits =
-    args
-    |> list.map(number_to_digits)
-
-  args_to_cephalopod_loop(arg_digits, [])
-}
-
-fn args_to_cephalopod_loop(
-  number_digits: List(List(Int)),
-  reformed: List(Int),
-) -> List(Int) {
-  case list.all(number_digits, list.is_empty) {
-    True -> reformed
-    False -> {
-      let first_digits =
-        number_digits
-        |> list.map(fn(digits) {
-          case digits {
-            [] -> 0
-            [first] -> first
-            [first, ..] -> first
-          }
-        })
-
-      let rests =
-        number_digits
-        |> list.map(fn(digits) { list.drop(digits, 1) })
-
-      let new_reformed =
-        reformed
-        |> list.prepend(digits_to_int(first_digits))
-
-      args_to_cephalopod_loop(rests, new_reformed)
-    }
-  }
-}
-
-fn digits_to_int(digits: List(Int)) -> Int {
-  list.fold(digits, 0, fn(acc, d) { acc * 10 + d })
-}
-
-// todo make this a shared function
-pub fn number_to_digits(number: Int) -> List(Int) {
-  number_to_digits_loop(number, [])
-  |> list.reverse
-}
-
-fn number_to_digits_loop(number: Int, current_digits: List(Int)) -> List(Int) {
-  case number {
-    n if n < 10 -> [n, ..current_digits]
-    n -> {
-      let assert Ok(digit) = int.modulo(n, 10)
-      let assert Ok(rest) = int.divide(n, 10)
-      [digit, ..number_to_digits_loop(rest, current_digits)]
-    }
-  }
-}
-
 pub fn parse_worksheet_cephalopod(input: String) {
   let lines = string.split(input, "\n")
   let argument_lines =
@@ -162,11 +90,8 @@ pub fn parse_argument_lines_loop(
 ) -> List(List(Int)) {
   case offsets {
     [] -> acc
-    [offset] -> {
+    [_] -> {
       let numbers = blocks_to_numbers(lines)
-
-      echo numbers
-
       [numbers, ..acc]
     }
     [offset, ..rest] -> {

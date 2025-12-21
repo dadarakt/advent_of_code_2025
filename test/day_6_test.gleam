@@ -1,5 +1,4 @@
 import day_6
-import gleam/string
 
 const test_input = "123 328  51 64 
  45 64  387 23 
@@ -27,8 +26,7 @@ pub fn grand_total_test() {
 pub fn to_cephalopod_test() {
   let worksheet = day_6.parse_worksheet_cephalopod(test_input)
   let sum = day_6.sum_worksheet_solutions(worksheet)
-  echo sum
-  echo worksheet
+  assert 3_263_827 == sum
 }
 
 pub fn parse_offsets_test() {

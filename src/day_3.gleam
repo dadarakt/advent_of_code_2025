@@ -4,8 +4,8 @@ import gleam/list
 import gleam/result
 import gleam/string
 
-import day_2
 import inputs
+import numbers
 
 pub fn main() -> Nil {
   let banks = inputs.input_for_day(3, parse_banks_from_string)
@@ -38,7 +38,7 @@ pub fn parse_banks_from_string(input: String) -> List(Int) {
 }
 
 pub fn largest_joltage_for_bank_int(bank: Int, n: Int) -> Int {
-  day_2.number_to_digits(bank)
+  numbers.number_to_digits(bank)
   |> largest_n_value_sum(n, 0)
 }
 

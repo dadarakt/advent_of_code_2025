@@ -1,10 +1,11 @@
 import day_2
+import numbers
 import range
 
 pub fn number_to_digits_test() {
-  assert [1, 2, 3] == day_2.number_to_digits(123)
-  assert [1, 2, 3] == day_2.number_to_digits(123)
-  assert [1, 1, 1, 9, 9, 9] == day_2.number_to_digits(111_999)
+  assert [1, 2, 3] == numbers.number_to_digits(123)
+  assert [1, 2, 3] == numbers.number_to_digits(123)
+  assert [1, 1, 1, 9, 9, 9] == numbers.number_to_digits(111_999)
 }
 
 pub fn duplicate_test() {

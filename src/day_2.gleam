@@ -2,6 +2,7 @@ import gleam/int
 import gleam/io
 import gleam/list
 import gleam/string
+import numbers
 
 import inputs
 import range
@@ -47,7 +48,7 @@ pub fn invalid_ids_in_range(
 }
 
 pub fn is_valid_id(number: Int) -> Bool {
-  let digits = number_to_digits(number)
+  let digits = numbers.number_to_digits(number)
   !has_duplicate_loop(digits, 1)
 }
 
@@ -65,7 +66,7 @@ pub fn made_of_two_same_numbers(number: Int) -> Bool {
 }
 
 pub fn made_of_repeated_numbers(number: Int) {
-  let digits = number_to_digits(number)
+  let digits = numbers.number_to_digits(number)
   made_of_repeated_numbers_recursion(digits, 1)
 }
 
@@ -106,20 +107,4 @@ pub fn has_duplicate_of_length(digits: List(Int), length: Int) {
     let #(first, second) = list.split(slice, length)
     first == second
   })
-}
-
-pub fn number_to_digits(number: Int) -> List(Int) {
-  number_to_digits_loop(number, [])
-  |> list.reverse
-}
-
-fn number_to_digits_loop(number: Int, current_digits: List(Int)) -> List(Int) {
-  case number {
-    n if n < 10 -> [n, ..current_digits]
-    n -> {
-      let assert Ok(digit) = int.modulo(n, 10)
-      let assert Ok(rest) = int.divide(n, 10)
-      [digit, ..number_to_digits_loop(rest, current_digits)]
-    }
-  }
 }
