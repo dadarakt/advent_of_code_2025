@@ -8,6 +8,7 @@ pub type Point3D {
 
 pub fn points_from_string(str: String) -> List(Point3D) {
   string.split(str, "\n")
+  |> list.filter(fn(l) { l != "" })
   |> list.map(from_string)
 }
 

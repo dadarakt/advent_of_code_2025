@@ -1,3 +1,6 @@
+import gleam/int
+import gleam/io
+
 import gleam/list
 import gleam/order.{type Order}
 import gleam/result
@@ -40,13 +43,24 @@ fn circuit_distance_loop(points_a, points_b, min) {
 }
 
 pub fn main() {
-  let initial_circuits: List(Circuit) = inputs.input_for_day(8, parse_circuits)
+  let circuits: List(Circuit) = inputs.input_for_day(8, parse_circuits)
 
-  let assert Ok(#(min_circuit_a, min_circuit_b)) =
-    find_closest_circuits(initial_circuits)
+  let merged =
+    connect_closest_circuits(circuits, 1000, 0.0)
+    |> list.map(fn(c) { c.junction_boxes |> list.length })
+    |> list.sort(int.compare)
 
-  echo min_circuit_a
-  echo min_circuit_b
+  let top_3_product =
+    merged
+    |> list.drop(list.length(merged) - 3)
+    |> list.fold(1, fn(acc, i) { acc * i })
+
+  io.println(
+    "The three biggest circuit's sizes multiplied are "
+    <> top_3_product |> int.to_string,
+  )
+
+  echo merged
 }
 
 const unreasonable_number = 1_000_000_000_000.0
