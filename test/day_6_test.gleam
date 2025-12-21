@@ -52,4 +52,6 @@ pub fn parse_block_test() {
     == day_6.blocks_to_numbers([" 103", "  40", "   6", "1234"])
   assert [4, 3063, 2, 1401]
     == day_6.blocks_to_numbers(["103 ", "40  ", "  6 ", "1234"])
+
+  assert [6998, 8879] == day_6.blocks_to_numbers(["86", "89", "79", "98"])
 }

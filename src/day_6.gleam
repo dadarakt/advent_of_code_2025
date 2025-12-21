@@ -162,14 +162,17 @@ pub fn parse_argument_lines_loop(
 ) -> List(List(Int)) {
   case offsets {
     [] -> acc
+    [offset] -> {
+      let numbers = blocks_to_numbers(lines)
+
+      echo numbers
+
+      [numbers, ..acc]
+    }
     [offset, ..rest] -> {
-      let length_num = case rest {
-        [] -> offset
-        _ -> offset - 1
-      }
       let blocks =
         lines
-        |> list.map(fn(l) { string.slice(l, 0, length_num) })
+        |> list.map(fn(l) { string.slice(l, 0, offset - 1) })
 
       let numbers = blocks_to_numbers(blocks)
 
