@@ -44,5 +44,33 @@ pub fn minimal_pairwise_distance_test() {
 
 pub fn closest_circuits_test() {
   let circuits = day_8.parse_circuits(test_input)
-  echo day_8.find_closest_circuits(circuits)
+  assert Ok(#(
+      day_8.Circuit([point_3d.Point3D(162, 817, 812)]),
+      day_8.Circuit([point_3d.Point3D(425, 690, 689)]),
+    ))
+    == day_8.find_closest_circuits(circuits)
+}
+
+pub fn equality_test() {
+  let a = day_8.Circuit([point_3d.Point3D(1, 2, 3)])
+  let b = day_8.Circuit([point_3d.Point3D(1, 2, 3)])
+
+  assert a == b
+}
+
+pub fn merge_circuits_test() {
+  let a = day_8.Circuit([point_3d.Point3D(1, 2, 3)])
+  let b = day_8.Circuit([point_3d.Point3D(2, 3, 5), point_3d.Point3D(8, 7, 6)])
+
+  assert day_8.Circuit([
+      point_3d.Point3D(1, 2, 3),
+      point_3d.Point3D(2, 3, 5),
+      point_3d.Point3D(8, 7, 6),
+    ])
+    == day_8.merge_circuits(a, b)
+}
+
+pub fn connect_closest_circuits_test() {
+  let circuits = day_8.parse_circuits(test_input)
+  echo day_8.connect_closest_circuits(circuits, 1)
 }

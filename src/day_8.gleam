@@ -50,6 +50,37 @@ pub fn main() {
   echo min_circuit_b
 }
 
+pub fn connect_closest_circuits(
+  circuits: List(Circuit),
+  n: Int,
+) -> List(Circuit) {
+  case n {
+    0 -> circuits
+    n -> {
+      case circuits {
+        [] -> []
+        [_circuit] as circuits -> circuits
+        circuits -> {
+          let assert Ok(#(min_a, min_b)) = find_closest_circuits(circuits)
+
+          let merged_circuit = merge_circuits(min_a, min_b)
+
+          let updated_circuits =
+            circuits
+            |> list.filter(fn(c) { c != min_a && c != min_b })
+            |> list.prepend(merged_circuit)
+
+          connect_closest_circuits(updated_circuits, n - 1)
+        }
+      }
+    }
+  }
+}
+
+pub fn merge_circuits(a: Circuit, b: Circuit) -> Circuit {
+  Circuit(list.append(a.junction_boxes, b.junction_boxes))
+}
+
 pub fn parse_circuits(str: String) -> List(Circuit) {
   point_3d.points_from_string(str)
   |> list.map(fn(p) { Circuit([p]) })
