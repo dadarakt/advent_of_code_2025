@@ -13,6 +13,34 @@ pub type Circuit {
   Circuit(junction_boxes: List(Point3D))
 }
 
+pub fn main() {
+  let circuits: List(Circuit) = inputs.input_for_day(8, parse_circuits)
+
+  let merged =
+    connect_closest_circuits(circuits, 1000, 0.0)
+    |> list.map(fn(c) { c.junction_boxes |> list.length })
+    |> list.sort(int.compare)
+
+  let top_3_product =
+    merged
+    |> list.drop(list.length(merged) - 3)
+    |> list.fold(1, fn(acc, i) { acc * i })
+
+  io.println(
+    "The three biggest circuit's sizes multiplied are "
+    <> top_3_product |> int.to_string,
+  )
+
+  let #(_merged_circuit, last_merged_points) = merge_until(circuits, 1)
+  let #(point_a, point_b) = last_merged_points
+  let multiplied_x = point_a.x * point_b.x
+
+  io.println(
+    "The product of the last merged point's X coordinates is "
+    <> multiplied_x |> int.to_string,
+  )
+}
+
 fn circuit_distance(a: Circuit, b: Circuit) -> Result(Float, Nil) {
   case a.junction_boxes |> list.is_empty || b.junction_boxes |> list.is_empty {
     True -> Error(Nil)
@@ -42,25 +70,87 @@ fn circuit_distance_loop(points_a, points_b, min) {
   }
 }
 
-pub fn main() {
-  let circuits: List(Circuit) = inputs.input_for_day(8, parse_circuits)
-
-  let merged =
-    connect_closest_circuits(circuits, 1000, 0.0)
-    |> list.map(fn(c) { c.junction_boxes |> list.length })
-    |> list.sort(int.compare)
-
-  let top_3_product =
-    merged
-    |> list.drop(list.length(merged) - 3)
-    |> list.fold(1, fn(acc, i) { acc * i })
-
-  io.println(
-    "The three biggest circuit's sizes multiplied are "
-    <> top_3_product |> int.to_string,
+fn closest_points_between_circuits(
+  a: Circuit,
+  b: Circuit,
+) -> #(Float, #(Point3D, Point3D)) {
+  let assert Ok(first_a) = list.first(a.junction_boxes)
+  let assert Ok(first_b) = list.first(b.junction_boxes)
+  let start_min = #(point_3d.distance(first_a, first_b), #(first_a, first_b))
+  closest_points_between_circuits_loop(
+    a.junction_boxes,
+    b.junction_boxes,
+    start_min,
   )
+}
 
-  echo merged
+fn closest_points_between_circuits_loop(points_a, points_b, min) {
+  case points_a {
+    [] -> min
+    [first, ..rest] -> {
+      let assert Ok(local_min) =
+        points_b
+        |> list.map(fn(b) { #(point_3d.distance(first, b), #(first, b)) })
+        |> min_of_list(fn(a, b) {
+          let #(dist_a, _) = a
+          let #(dist_b, _) = b
+          float.compare(dist_a, dist_b)
+        })
+
+      let #(local_min_dist, _) = local_min
+      let #(min_dist, _) = min
+
+      case float.compare(local_min_dist, min_dist) {
+        order.Lt ->
+          closest_points_between_circuits_loop(rest, points_b, local_min)
+        order.Eq | order.Gt ->
+          closest_points_between_circuits_loop(rest, points_b, min)
+      }
+    }
+  }
+}
+
+pub fn merge_until(
+  circuits: List(Circuit),
+  target_count: Int,
+) -> #(List(Circuit), #(Point3D, Point3D)) {
+  let initial_closest_points = #(
+    point_3d.Point3D(-1, -1, -1),
+    point_3d.Point3D(-1, -1, -1),
+  )
+  iteratively_merge(circuits, target_count, initial_closest_points)
+}
+
+fn iteratively_merge(
+  circuits: List(Circuit),
+  target_count: Int,
+  last_closest_points: #(Point3D, Point3D),
+) -> #(List(Circuit), #(Point3D, Point3D)) {
+  case list.length(circuits) <= target_count {
+    True -> #(circuits, last_closest_points)
+    False -> {
+      let assert Ok(#(min_a, min_b, #(_, closest_points))) =
+        circuits
+        |> list.combination_pairs
+        |> list.map(fn(t) {
+          let #(a, b) = t
+          #(a, b, closest_points_between_circuits(a, b))
+        })
+        |> min_of_list(fn(a, b) {
+          let #(_, _, #(dist_a, _)) = a
+          let #(_, _, #(dist_b, _)) = b
+          float.compare(dist_a, dist_b)
+        })
+      let merged_circuit = merge_circuits(min_a, min_b)
+
+      let updated_circuits =
+        circuits
+        |> list.filter(fn(c) { c != min_a && c != min_b })
+        |> list.prepend(merged_circuit)
+
+      iteratively_merge(updated_circuits, target_count, closest_points)
+    }
+  }
 }
 
 const unreasonable_number = 1_000_000_000_000.0
