@@ -16,10 +16,13 @@ pub type Rectangle {
 pub fn main() {
   let points = inputs.input_for_day(9, points_from_string)
   let max_area = maximal_rectangle(points)
-
   io.println("The maximal area is " <> int.to_string(max_area))
 
-  print_tiles(points)
+  let max_area_within_poly = maximal_rectangle_in_polygon(points)
+  io.println(
+    "The maximal area within the tiles is "
+    <> int.to_string(max_area_within_poly),
+  )
 }
 
 pub fn area(r: Rectangle) -> Int {
@@ -37,12 +40,24 @@ pub type Point2D {
   Point2D(x: Int, y: Int)
 }
 
-pub type Line2D {
-  Line2D(from: Point2D, to: Point2D)
+pub type LineSegment2D {
+  LineSegment2D(from: Point2D, to: Point2D)
+}
+
+pub fn do_intersect(a: LineSegment2D, b: LineSegment2D) -> Bool {
+  intersect(a.from, a.to, b.from, b.to)
+}
+
+fn ccw(a: Point2D, b: Point2D, c: Point2D) {
+  { c.y - a.y } * { b.x - a.x } > { b.y - a.y } * { c.x - a.x }
+}
+
+fn intersect(a, b, c, d) {
+  ccw(a, c, d) != ccw(b, c, d) && ccw(a, b, c) != ccw(a, b, d)
 }
 
 pub type Polygon2D {
-  Polygon2D(lines: List(Line2D))
+  Polygon2D(lines: List(LineSegment2D))
 }
 
 /// assumes that points loop
@@ -58,11 +73,116 @@ pub fn polygon_from_points(points: List(Point2D)) -> Polygon2D {
 fn lines_from_points_loop(points, first) {
   case points {
     [] -> []
-    [last] -> [Line2D(last, first)]
+    [last] -> [LineSegment2D(last, first)]
     [first, second, ..rest] -> [
-      Line2D(first, second),
+      LineSegment2D(first, second),
       ..lines_from_points_loop([second, ..rest], first)
     ]
+  }
+}
+
+pub fn maximal_rectangle_in_polygon(points: List(Point2D)) {
+  let points_dict =
+    points
+    |> list.index_map(fn(p, idx) { #(idx, p) })
+    |> dict.from_list()
+
+  let poly = polygon_from_points(points)
+
+  max_rectangle_in_polygon_loop(points_dict, poly, list.length(points), 0, 0, 0)
+}
+
+fn max_rectangle_in_polygon_loop(
+  points_dict,
+  poly,
+  num_points,
+  idx_a,
+  idx_b,
+  max,
+) {
+  case idx_a >= num_points {
+    True -> max
+    False -> {
+      case idx_b >= num_points {
+        True ->
+          max_rectangle_in_polygon_loop(
+            points_dict,
+            poly,
+            num_points,
+            idx_a + 1,
+            0,
+            max,
+          )
+        False -> {
+          let assert Ok(a) = dict.get(points_dict, idx_a)
+          let assert Ok(b) = dict.get(points_dict, idx_b)
+
+          case rectangle_in_poly(poly, a, b) {
+            True -> {
+              let area = rectangle_area(a, b)
+
+              case int.compare(area, max) {
+                order.Gt ->
+                  max_rectangle_loop(
+                    points_dict,
+                    num_points,
+                    idx_a,
+                    idx_b + 1,
+                    area,
+                  )
+                order.Lt | order.Eq ->
+                  max_rectangle_in_polygon_loop(
+                    points_dict,
+                    poly,
+                    num_points,
+                    idx_a,
+                    idx_b + 1,
+                    max,
+                  )
+              }
+            }
+            False -> {
+              max_rectangle_in_polygon_loop(
+                points_dict,
+                poly,
+                num_points,
+                idx_a,
+                idx_b + 1,
+                max,
+              )
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+fn rectangle_in_poly(poly: Polygon2D, a: Point2D, b: Point2D) {
+  let c = Point2D(a.x, b.y)
+  let d = Point2D(b.x, a.y)
+
+  [a, b, c, d]
+  |> list.all(point_in_poly(poly, _))
+}
+
+fn point_in_poly(poly: Polygon2D, p: Point2D) {
+  let line_to_zero = LineSegment2D(p, Point2D(0, 0))
+  case count_intersections(poly.lines, line_to_zero) {
+    n if n % 2 == 1 -> True
+    _ -> False
+  }
+}
+
+fn count_intersections(segments: List(LineSegment2D), l: LineSegment2D) -> Int {
+  case segments {
+    [] -> 0
+    [first, ..rest] -> {
+      case do_intersect(first, l) {
+        True -> 1 + count_intersections(rest, l)
+        False -> count_intersections(rest, l)
+      }
+    }
   }
 }
 
