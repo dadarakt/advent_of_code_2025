@@ -83,4 +83,5 @@ pub fn closest_circuits_by_boxes_test() {
 
 pub fn iterative_merging_test() {
   let circuits = day_8.parse_circuits(test_input)
+  day_8.merge_until(circuits, 1)
 }
