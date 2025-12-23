@@ -11,6 +11,10 @@ pub type Dir {
   Horizontal
 }
 
+pub type Vec2D {
+  Vec2D(x: Int, y: Int)
+}
+
 pub fn new(from: Point2D, to: Point2D) -> Result(OrthoLine2D, Nil) {
   let orthogonal = from.x == to.x || from.y == to.y
   let length_pos =
@@ -29,13 +33,62 @@ pub fn dir(line: OrthoLine2D) -> Dir {
   }
 }
 
+fn cross_product(a: Vec2D, b: Vec2D) -> Int {
+  a.x * b.y - b.x * a.y
+}
+
+pub type Orientation {
+  Clockwise
+  AntiClockwise
+  Zero
+}
+
+fn orientation(p: Point2D, l: OrthoLine2D) -> Orientation {
+  let v_from = Vec2D(l.from.x - p.x, l.from.y - p.y)
+  let v_to = Vec2D(l.to.x - p.x, l.to.y - p.y)
+
+  case cross_product(v_to, v_from) {
+    x if x > 0 -> Clockwise
+    x if x < 0 -> AntiClockwise
+    _ -> Zero
+  }
+}
+
+pub fn crossing(a: OrthoLine2D, b: OrthoLine2D) -> Bool {
+  let o1 = orientation(b.from, a)
+  let o2 = orientation(b.to, a)
+  let o3 = orientation(a.from, b)
+  let o4 = orientation(a.to, b)
+
+  case { Zero == o1 && Zero == o2 } || { Zero == o3 && Zero == o4 } {
+    True -> {
+      // colinear
+      {
+        { b.from.x >= a.from.x && b.from.x <= a.to.x }
+        && { b.from.y >= a.from.y && b.from.y <= a.to.y }
+      }
+      || {
+        { b.to.x >= a.from.x && b.to.x <= a.to.x }
+        && { b.to.y >= a.from.y && b.to.y <= a.to.y }
+      }
+    }
+    False -> o1 != o2 && o3 != o4
+  }
+}
+
 pub fn do_cross(a: OrthoLine2D, b: OrthoLine2D) -> Bool {
   case dir(a), dir(b) {
     Horizontal, Horizontal -> {
-      overlap(a.from.x, a.to.x, b.from.x, b.to.x)
+      case a.from.x == b.from.x {
+        True -> overlap(a.from.x, a.to.x, b.from.x, b.to.x)
+        False -> False
+      }
     }
     Vertical, Vertical -> {
-      overlap(a.from.y, a.to.y, b.from.y, b.to.y)
+      case a.from.y == b.from.y {
+        True -> overlap(a.from.y, a.to.y, b.from.y, b.to.y)
+        False -> False
+      }
     }
     _, _ -> {
       // TODO
