@@ -13,6 +13,14 @@ pub type Rectangle {
   Rectangle(a: Point2D, b: Point2D)
 }
 
+pub type Point2D {
+  Point2D(x: Int, y: Int)
+}
+
+pub type LineSegment2D {
+  LineSegment2D(from: Point2D, to: Point2D)
+}
+
 pub fn main() {
   let points = inputs.input_for_day(9, points_from_string)
   let max_area = maximal_rectangle(points)
@@ -34,14 +42,6 @@ pub fn rectangle_area(a: Point2D, b: Point2D) -> Int {
   let diff_y = int.absolute_value(a.y - b.y) + 1
 
   diff_x * diff_y
-}
-
-pub type Point2D {
-  Point2D(x: Int, y: Int)
-}
-
-pub type LineSegment2D {
-  LineSegment2D(from: Point2D, to: Point2D)
 }
 
 pub fn do_intersect(a: LineSegment2D, b: LineSegment2D) -> Bool {

@@ -6,11 +6,12 @@
 ```sh
 gleam add advent_of_code_2025@1
 ```
+
 ```gleam
 import advent_of_code_2025
 
 pub fn main() -> Nil {
-  // TODO: An example of the project in use
+  //
 }
 ```
 
