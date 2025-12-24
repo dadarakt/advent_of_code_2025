@@ -44,10 +44,13 @@ pub type Orientation {
 }
 
 fn orientation(p: Point2D, l: OrthoLine2D) -> Orientation {
-  let v_from = Vec2D(l.from.x - p.x, l.from.y - p.y)
-  let v_to = Vec2D(l.to.x - p.x, l.to.y - p.y)
+  let cross_product =
+    { l.from.x - p.x }
+    * { l.to.y - p.y }
+    - { l.to.x - p.x }
+    * { l.from.y - p.y }
 
-  case cross_product(v_to, v_from) {
+  case cross_product {
     x if x > 0 -> Clockwise
     x if x < 0 -> AntiClockwise
     _ -> Zero

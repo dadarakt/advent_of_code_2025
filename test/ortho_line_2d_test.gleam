@@ -1,3 +1,4 @@
+import gleam/int
 import ortho_line_2d
 import point_2d
 
@@ -65,4 +66,19 @@ pub fn crossing_test() {
   let assert Ok(b) =
     ortho_line_2d.new(point_2d.Point2D(0, 5), point_2d.Point2D(10, 5))
   assert True == ortho_line_2d.crossing(a, b)
+}
+
+pub fn xor_swap_test() {
+  let x = 42
+  let y = 420
+
+  let x = int.bitwise_exclusive_or(y, x)
+  // x: y^x
+  let y = int.bitwise_exclusive_or(x, y)
+  // y: y^x^y (x)
+  let x = int.bitwise_exclusive_or(y, x)
+  // y^x^x
+  //
+  assert x == 420
+  assert y == 42
 }
