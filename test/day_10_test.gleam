@@ -17,7 +17,7 @@ pub fn parsing_test() {
   assert [3, 5, 4, 7] == m.joltage_requirements
 }
 
-pub fn solve_test() {
+pub fn solve_toggles_test() {
   let machines = day_10.parse_instructions(test_input)
   let assert [m, ..] = machines
 
@@ -31,4 +31,12 @@ pub fn solve_test() {
     |> result.values()
     |> list.map(fn(s) { list.length(s.button_presses) })
     |> int.sum
+}
+
+pub fn solve_joltages_test() {
+  let machines = day_10.parse_instructions(test_input)
+  let assert [m, ..] = machines
+
+  let assert Ok(solved_state) = day_10.solve_joltages(m)
+  assert 10 == solved_state.button_presses
 }

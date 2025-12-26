@@ -1,3 +1,4 @@
+import gleam/dict.{type Dict}
 import gleam/int
 import gleam/list
 import gleam/option
@@ -22,6 +23,10 @@ pub type ToggleSearchState {
   ToggleSearchState(indicator_state: List(Bool), button_presses: List(Int))
 }
 
+pub type JoltageSearchState {
+  JoltageSearchState(joltage_state: Dict(Int, Int), button_presses: Int)
+}
+
 pub fn main() {
   let machines = inputs.input_for_day(10, parse_instructions)
 
@@ -33,7 +38,56 @@ pub fn main() {
     |> int.sum
 
   io.println(
-    "The total number of button presses is " <> int.to_string(sum_of_steps),
+    "The total number of button presses for toggles is "
+    <> int.to_string(sum_of_steps),
+  )
+
+  let solutions = machines |> list.map(solve_joltages)
+  let sum_of_steps =
+    solutions
+    |> result.values()
+    |> list.map(fn(s) { s.button_presses })
+    |> int.sum
+
+  io.println(
+    "The total number of button presses for joltags is "
+    <> int.to_string(sum_of_steps),
+  )
+}
+
+pub fn solve_joltages(m: Machine) {
+  let joltage_state =
+    m.joltage_requirements
+    |> list.index_map(fn(_, i) { #(i, 0) })
+    |> dict.from_list()
+
+  let search_state = JoltageSearchState(joltage_state, 0)
+  let next_states_fun = fn(state: JoltageSearchState) {
+    m.buttons
+    |> list.map(fn(b) {
+      // try apply button many times
+      JoltageSearchState(
+        apply_joltage_button(state.joltage_state, b),
+        state.button_presses + 1,
+      )
+    })
+  }
+
+  let desired_dict =
+    m.joltage_requirements
+    |> list.index_map(fn(x, i) { #(i, x) })
+    |> dict.from_list()
+
+  let eval_fun = fn(state: JoltageSearchState) {
+    state.joltage_state == desired_dict
+  }
+
+  echo breadth_first_solve(
+    [search_state],
+    next_states_fun,
+    eval_fun,
+    hash_joltages,
+    set.new(),
   )
 }
 
@@ -46,7 +100,7 @@ pub fn solve_toggles(m: Machine) {
   let next_states_fun = fn(state: ToggleSearchState) {
     m.buttons
     |> list.index_map(fn(b, i) {
-      ToggleSearchState(apply_button(state.indicator_state, b), [
+      ToggleSearchState(apply_toggle_button(state.indicator_state, b), [
         i,
         ..state.button_presses
       ])
@@ -121,7 +175,44 @@ fn hash_toggles_loop(toggles: List(Bool)) {
   }
 }
 
-fn apply_button(state: List(Bool), button: List(Int)) -> List(Bool) {
+fn hash_joltages(state: JoltageSearchState) {
+  state.joltage_state
+  |> dict.to_list()
+  |> list.sort(fn(a, b) {
+    let #(a_key, _) = a
+    let #(b_key, _) = b
+    int.compare(a_key, b_key)
+  })
+  |> list.map(fn(t) {
+    let #(_, val) = t
+    val
+  })
+  |> hash_int_list()
+}
+
+fn hash_int_list(l: List(Int)) {
+  case l {
+    [] -> 0
+    [first, ..rest] -> hash_int_list(rest) * 31 + first
+  }
+}
+
+fn apply_joltage_button(
+  state: Dict(Int, Int),
+  button: List(Int),
+) -> Dict(Int, Int) {
+  button
+  |> list.fold(state, fn(acc, b) {
+    dict.upsert(acc, b, fn(x) {
+      case x {
+        option.None -> 1
+        option.Some(val) -> val + 1
+      }
+    })
+  })
+}
+
+fn apply_toggle_button(state: List(Bool), button: List(Int)) -> List(Bool) {
   button
   |> list.fold(state, fn(acc, b) {
     let #(before, rest) = list.split(acc, b)
