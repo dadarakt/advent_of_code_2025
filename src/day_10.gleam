@@ -3,7 +3,12 @@ import gleam/list
 import gleam/option
 import gleam/regexp
 import gleam/result
+import gleam/set.{type Set}
 import gleam/string
+
+import gleam/io
+
+import inputs
 
 pub type Machine {
   Machine(
@@ -13,29 +18,75 @@ pub type Machine {
   )
 }
 
+pub type SearchState {
+  SearchState(indicator_state: List(Bool), button_presses: List(Int))
+}
+
+pub fn main() {
+  let machines = inputs.input_for_day(10, parse_instructions)
+
+  let solutions = machines |> list.map(solve_machine)
+  let sum_of_steps =
+    solutions |> result.values() |> list.map(list.length) |> int.sum
+
+  io.println(
+    "The total number of button presses is " <> int.to_string(sum_of_steps),
+  )
+}
+
 pub fn solve_machine(m: Machine) {
-  let state =
+  let indicator_state =
     m.desired_indicators
     |> list.map(fn(_) { False })
 
-  breadth_first_solve([#(state, 0)], m)
+  let search_state = SearchState(indicator_state, [])
+
+  echo breadth_first_solve([search_state], m, set.new())
 }
 
-pub fn breadth_first_solve(queue: List(#(List(Bool), Int)), m: Machine) {
+pub fn breadth_first_solve(
+  queue: List(SearchState),
+  m: Machine,
+  seen_state_hashes: Set(Int),
+) {
   case queue {
     [] -> Error("No Solution possible")
     [first, ..rest] -> {
-      let #(state, steps) = first
-      case state == m.desired_indicators {
-        True -> Ok(steps)
+      case first.indicator_state == m.desired_indicators {
+        True -> Ok(first.button_presses)
         False -> {
-          let new_states =
-            m.buttons
-            |> list.map(fn(b) { #(apply_button(state, b), steps + 1) })
+          let state_hash = hash_state(first.indicator_state)
+          case set.contains(seen_state_hashes, state_hash) {
+            True -> breadth_first_solve(rest, m, seen_state_hashes)
+            False -> {
+              let new_states =
+                m.buttons
+                |> list.index_map(fn(b, i) {
+                  let new_state = apply_button(first.indicator_state, b)
+                  SearchState(new_state, [i, ..first.button_presses])
+                })
 
-          let new_queue = list.append(rest, new_states)
-          breadth_first_solve(new_queue, m)
+              let new_queue = list.append(rest, new_states)
+              breadth_first_solve(
+                new_queue,
+                m,
+                set.insert(seen_state_hashes, state_hash),
+              )
+            }
+          }
         }
+      }
+    }
+  }
+}
+
+fn hash_state(state: List(Bool)) {
+  case state {
+    [] -> 0
+    [first, ..rest] -> {
+      case first {
+        True -> int.bitwise_shift_left(hash_state(rest), 1) + 1
+        False -> int.bitwise_shift_left(hash_state(rest), 1)
       }
     }
   }
@@ -54,6 +105,7 @@ fn apply_button(state: List(Bool), button: List(Int)) -> List(Bool) {
 
 pub fn parse_instructions(str: String) -> List(Machine) {
   string.split(str, "\n")
+  |> list.filter(fn(l) { l != "" })
   |> list.map(parse_machine)
 }
 

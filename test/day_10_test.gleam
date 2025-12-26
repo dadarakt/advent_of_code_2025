@@ -1,5 +1,7 @@
 import day_10
+import gleam/int
 import gleam/list
+import gleam/result
 
 const test_input = "[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
 [...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}
@@ -19,5 +21,10 @@ pub fn solve_test() {
   let machines = day_10.parse_instructions(test_input)
   let assert [m, ..] = machines
 
-  echo day_10.solve_machine(m)
+  let assert Ok(button_presses) = day_10.solve_machine(m)
+  assert 2 == list.length(button_presses)
+
+  let solutions = machines |> list.map(day_10.solve_machine)
+
+  assert 7 == solutions |> result.values() |> list.map(list.length) |> int.sum
 }
