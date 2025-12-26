@@ -21,10 +21,14 @@ pub fn solve_test() {
   let machines = day_10.parse_instructions(test_input)
   let assert [m, ..] = machines
 
-  let assert Ok(button_presses) = day_10.solve_machine(m)
-  assert 2 == list.length(button_presses)
+  let assert Ok(solved_state) = day_10.solve_toggles(m)
+  assert 2 == list.length(solved_state.button_presses)
 
-  let solutions = machines |> list.map(day_10.solve_machine)
+  let solutions = machines |> list.map(day_10.solve_toggles)
 
-  assert 7 == solutions |> result.values() |> list.map(list.length) |> int.sum
+  assert 7
+    == solutions
+    |> result.values()
+    |> list.map(fn(s) { list.length(s.button_presses) })
+    |> int.sum
 }

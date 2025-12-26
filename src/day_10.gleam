@@ -18,75 +18,104 @@ pub type Machine {
   )
 }
 
-pub type SearchState {
-  SearchState(indicator_state: List(Bool), button_presses: List(Int))
+pub type ToggleSearchState {
+  ToggleSearchState(indicator_state: List(Bool), button_presses: List(Int))
 }
 
 pub fn main() {
   let machines = inputs.input_for_day(10, parse_instructions)
 
-  let solutions = machines |> list.map(solve_machine)
+  let solutions = machines |> list.map(solve_toggles)
   let sum_of_steps =
-    solutions |> result.values() |> list.map(list.length) |> int.sum
+    solutions
+    |> result.values()
+    |> list.map(fn(s) { list.length(s.button_presses) })
+    |> int.sum
 
   io.println(
     "The total number of button presses is " <> int.to_string(sum_of_steps),
   )
 }
 
-pub fn solve_machine(m: Machine) {
+pub fn solve_toggles(m: Machine) {
   let indicator_state =
     m.desired_indicators
     |> list.map(fn(_) { False })
 
-  let search_state = SearchState(indicator_state, [])
+  let search_state = ToggleSearchState(indicator_state, [])
+  let next_states_fun = fn(state: ToggleSearchState) {
+    m.buttons
+    |> list.index_map(fn(b, i) {
+      ToggleSearchState(apply_button(state.indicator_state, b), [
+        i,
+        ..state.button_presses
+      ])
+    })
+  }
 
-  echo breadth_first_solve([search_state], m, set.new())
+  let eval_fun = fn(state: ToggleSearchState) {
+    state.indicator_state == m.desired_indicators
+  }
+  breadth_first_solve(
+    [search_state],
+    next_states_fun,
+    eval_fun,
+    hash_toggles,
+    set.new(),
+  )
 }
 
 pub fn breadth_first_solve(
-  queue: List(SearchState),
-  m: Machine,
+  queue: List(s),
+  next_states_fun: fn(s) -> List(s),
+  eval_fun: fn(s) -> Bool,
+  hash_state_fun: fn(s) -> Int,
   seen_state_hashes: Set(Int),
-) {
+) -> Result(s, String) {
   case queue {
     [] -> Error("No Solution possible")
-    [first, ..rest] -> {
-      case first.indicator_state == m.desired_indicators {
-        True -> Ok(first.button_presses)
+    [state, ..rest] -> {
+      case eval_fun(state) {
+        True -> Ok(state)
         False -> {
-          let state_hash = hash_state(first.indicator_state)
-          case set.contains(seen_state_hashes, state_hash) {
-            True -> breadth_first_solve(rest, m, seen_state_hashes)
-            False -> {
-              let new_states =
-                m.buttons
-                |> list.index_map(fn(b, i) {
-                  let new_state = apply_button(first.indicator_state, b)
-                  SearchState(new_state, [i, ..first.button_presses])
-                })
+          let #(seen_hashes, new_states) =
+            next_states_fun(state)
+            |> list.fold(#(seen_state_hashes, []), fn(acc, s) {
+              let #(hashes, states) = acc
+              let hash = hash_state_fun(s)
 
-              let new_queue = list.append(rest, new_states)
-              breadth_first_solve(
-                new_queue,
-                m,
-                set.insert(seen_state_hashes, state_hash),
-              )
-            }
-          }
+              case set.contains(hashes, hash) {
+                True -> #(hashes, states)
+                False -> #(set.insert(hashes, hash), [s, ..states])
+              }
+            })
+
+          let updated_queue = list.append(rest, new_states)
+
+          breadth_first_solve(
+            updated_queue,
+            next_states_fun,
+            eval_fun,
+            hash_state_fun,
+            seen_hashes,
+          )
         }
       }
     }
   }
 }
 
-fn hash_state(state: List(Bool)) {
-  case state {
+fn hash_toggles(state: ToggleSearchState) {
+  hash_toggles_loop(state.indicator_state)
+}
+
+fn hash_toggles_loop(toggles: List(Bool)) {
+  case toggles {
     [] -> 0
     [first, ..rest] -> {
       case first {
-        True -> int.bitwise_shift_left(hash_state(rest), 1) + 1
-        False -> int.bitwise_shift_left(hash_state(rest), 1)
+        True -> int.bitwise_shift_left(hash_toggles_loop(rest), 1) + 1
+        False -> int.bitwise_shift_left(hash_toggles_loop(rest), 1)
       }
     }
   }
