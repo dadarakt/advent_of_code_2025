@@ -172,6 +172,24 @@ pub fn solve_toggles(m: Machine) {
   )
 }
 
+/// assume a button that increments all value at once
+pub fn joltage_heuristic(s: JoltageSearchState, m: Machine) -> Int {
+  let dist =
+    m.joltage_requirements
+    |> list.index_map(fn(v, i) { #(i, v) })
+    |> list.fold(0, fn(acc, t) {
+      let #(key, v) = t
+      let d = v - { dict.get(s.joltage_state, key) |> result.unwrap(0) }
+      d + acc
+    })
+
+  dist / list.length(m.joltage_requirements)
+}
+
+pub fn a_star_search(start, goal, h) {
+  todo
+}
+
 pub fn breadth_first_solve(
   queue: List(s),
   next_states_fun: fn(s) -> List(s),
