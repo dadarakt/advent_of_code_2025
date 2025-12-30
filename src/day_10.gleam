@@ -55,6 +55,38 @@ pub fn main() {
   )
 }
 
+pub fn backtrack_joltage(m: Machine) {
+  let next_states_fun = fn(state: JoltageSearchState) {
+    m.buttons
+    |> list.flat_map(fn(b) {
+      // try apply button many times
+      [
+        JoltageSearchState(
+          apply_joltage_button(state.joltage_state, b, 10),
+          state.button_presses + 10,
+        ),
+        JoltageSearchState(
+          apply_joltage_button(state.joltage_state, b, 5),
+          state.button_presses + 5,
+        ),
+        JoltageSearchState(
+          apply_joltage_button(state.joltage_state, b, 1),
+          state.button_presses + 1,
+        ),
+      ]
+    })
+  }
+}
+
+/// This won't be feasible here, as we need the optimal solution, not just any solution
+pub fn backtrack(
+  state: s,
+  _next: fn(s) -> List(s),
+  _admissable: fn(s) -> Bool,
+) -> s {
+  state
+}
+
 pub fn solve_joltages(m: Machine) {
   let joltage_state =
     m.joltage_requirements
@@ -64,13 +96,24 @@ pub fn solve_joltages(m: Machine) {
   let search_state = JoltageSearchState(joltage_state, 0)
   let next_states_fun = fn(state: JoltageSearchState) {
     m.buttons
-    |> list.map(fn(b) {
+    |> list.flat_map(fn(b) {
       // try apply button many times
-      JoltageSearchState(
-        apply_joltage_button(state.joltage_state, b),
-        state.button_presses + 1,
-      )
+      [
+        JoltageSearchState(
+          apply_joltage_button(state.joltage_state, b, 10),
+          state.button_presses + 10,
+        ),
+        JoltageSearchState(
+          apply_joltage_button(state.joltage_state, b, 5),
+          state.button_presses + 5,
+        ),
+        JoltageSearchState(
+          apply_joltage_button(state.joltage_state, b, 1),
+          state.button_presses + 1,
+        ),
+      ]
     })
+    |> list.filter(validate_state(_, m))
   }
 
   let desired_dict =
@@ -89,6 +132,16 @@ pub fn solve_joltages(m: Machine) {
     hash_joltages,
     set.new(),
   )
+}
+
+fn validate_state(s: JoltageSearchState, m: Machine) {
+  m.joltage_requirements
+  |> list.index_map(fn(v, i) { #(i, v) })
+  |> list.all(fn(t) {
+    let #(key, value) = t
+    let current_value = dict.get(s.joltage_state, key) |> result.unwrap(0)
+    current_value <= value
+  })
 }
 
 pub fn solve_toggles(m: Machine) {
@@ -200,13 +253,14 @@ fn hash_int_list(l: List(Int)) {
 fn apply_joltage_button(
   state: Dict(Int, Int),
   button: List(Int),
+  times: Int,
 ) -> Dict(Int, Int) {
   button
   |> list.fold(state, fn(acc, b) {
     dict.upsert(acc, b, fn(x) {
       case x {
-        option.None -> 1
-        option.Some(val) -> val + 1
+        option.None -> times
+        option.Some(val) -> val + times
       }
     })
   })
