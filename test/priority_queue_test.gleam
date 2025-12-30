@@ -26,4 +26,7 @@ pub fn pop_test() {
 
   assert popped == "c"
   assert rest.items == [#(2, "b"), #(3, "a")]
+
+  let q = priority_queue.new()
+  let assert Error(Nil) = priority_queue.pop(q)
 }

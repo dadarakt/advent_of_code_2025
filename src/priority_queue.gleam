@@ -13,6 +13,10 @@ pub fn length(priority_queue q: PriorityQueue(t)) -> Int {
   list.length(q.items)
 }
 
+pub fn is_empty(priority_queue q: PriorityQueue(t)) -> Bool {
+  list.is_empty(q.items)
+}
+
 pub fn to_list(priority_queue q: PriorityQueue(t)) -> List(t) {
   q.items
   |> list.map(fn(t) {
@@ -38,6 +42,28 @@ pub fn insert(
     |> list.append([#(p, t), ..after_items])
 
   PriorityQueue(items)
+}
+
+pub fn remove(priority_queue q: PriorityQueue(t), item t: t) -> PriorityQueue(t) {
+  let #(before_items, after_items) =
+    q.items
+    |> list.split_while(fn(i) {
+      let #(_p, i) = i
+      i != t
+    })
+
+  let items =
+    before_items
+    |> list.append(after_items)
+
+  PriorityQueue(items)
+}
+
+pub fn contains(priority_queue q: PriorityQueue(t), item t: t) -> Bool {
+  list.any(q.items, fn(i) {
+    let #(_p, i) = i
+    i == t
+  })
 }
 
 pub fn pop(l: PriorityQueue(t)) -> Result(#(t, PriorityQueue(t)), Nil) {

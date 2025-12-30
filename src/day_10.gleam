@@ -6,6 +6,7 @@ import gleam/regexp
 import gleam/result
 import gleam/set.{type Set}
 import gleam/string
+import priority_queue.{type PriorityQueue}
 
 import gleam/io
 
@@ -78,15 +79,6 @@ pub fn backtrack_joltage(m: Machine) {
   }
 }
 
-/// This won't be feasible here, as we need the optimal solution, not just any solution
-pub fn backtrack(
-  state: s,
-  _next: fn(s) -> List(s),
-  _admissable: fn(s) -> Bool,
-) -> s {
-  state
-}
-
 pub fn solve_joltages(m: Machine) {
   let joltage_state =
     m.joltage_requirements
@@ -96,22 +88,12 @@ pub fn solve_joltages(m: Machine) {
   let search_state = JoltageSearchState(joltage_state, 0)
   let next_states_fun = fn(state: JoltageSearchState) {
     m.buttons
-    |> list.flat_map(fn(b) {
+    |> list.map(fn(b) {
       // try apply button many times
-      [
-        JoltageSearchState(
-          apply_joltage_button(state.joltage_state, b, 10),
-          state.button_presses + 10,
-        ),
-        JoltageSearchState(
-          apply_joltage_button(state.joltage_state, b, 5),
-          state.button_presses + 5,
-        ),
-        JoltageSearchState(
-          apply_joltage_button(state.joltage_state, b, 1),
-          state.button_presses + 1,
-        ),
-      ]
+      JoltageSearchState(
+        apply_joltage_button(state.joltage_state, b, 1),
+        state.button_presses + 1,
+      )
     })
     |> list.filter(validate_state(_, m))
   }
@@ -186,8 +168,93 @@ pub fn joltage_heuristic(s: JoltageSearchState, m: Machine) -> Int {
   dist / list.length(m.joltage_requirements)
 }
 
-pub fn a_star_search(start, goal, h) {
-  todo
+pub type JoltageState {
+  JoltageState(values: List(Int))
+}
+
+pub fn a_star_search(
+  start: s,
+  goal: s,
+  h: fn(s) -> Int,
+  next: fn(s) -> List(s),
+) -> Result(List(s), String) {
+  a_star_loop(
+    goal,
+    h,
+    next,
+    priority_queue.new() |> priority_queue.insert(start, h(start)),
+    dict.new() |> dict.insert(start, h(start)),
+    dict.new() |> dict.insert(start, 0),
+    dict.new(),
+  )
+}
+
+pub fn a_star_loop(
+  goal: s,
+  h: fn(s) -> Int,
+  next: fn(s) -> List(s),
+  open_queue: PriorityQueue(s),
+  f_scores: Dict(s, Int),
+  g_scores: Dict(s, Int),
+  came_from: Dict(s, s),
+) -> Result(List(s), String) {
+  case priority_queue.is_empty(open_queue) {
+    True -> Error("no solution found")
+    False -> {
+      let assert Ok(#(state, rest)) = priority_queue.pop(open_queue)
+      case state == goal {
+        True -> Ok(trace_back_path(state, came_from))
+        False -> {
+          let assert Ok(curr_g) = dict.get(g_scores, state)
+          let new_states = next(state)
+
+          // update g scores
+          new_states
+          |> list.fold(
+            #(g_scores, f_scores, came_from, open_queue),
+            fn(scores, s) {
+              let #(g_scores, f_scores, came_from, open_queue) = scores
+              let cur_g = dict.get(g_scores, s) |> result.unwrap(1_000_000_000)
+              // TODO hardcoded dist measure
+              let new_g = curr_g + 1
+
+              case new_g < cur_g {
+                True -> {
+                  let f_score = new_g + h(s)
+                  let updated_queue = case priority_queue.contains(rest, s) {
+                    True -> rest
+                    False -> rest |> priority_queue.insert(s, f_score)
+                  }
+                  #(
+                    g_scores |> dict.insert(s, new_g),
+                    f_scores |> dict.insert(s, f_score),
+                    came_from |> dict.insert(s, state),
+                    updated_queue,
+                  )
+                }
+                False -> {
+                  #(g_scores, f_scores, came_from, open_queue)
+                }
+              }
+            },
+          )
+          // update f scores
+          a_star_loop(goal, h, next, open_queue, f_scores, g_scores, came_from)
+        }
+      }
+    }
+  }
+}
+
+fn trace_back_path(s: s, came_from: Dict(s, s)) -> List(s) {
+  trace_back_path_loop(s, came_from, [])
+}
+
+fn trace_back_path_loop(s, came_from, acc) {
+  case dict.get(came_from, s) {
+    Error(_) -> acc
+    Ok(new_s) -> trace_back_path_loop(new_s, came_from, [s, ..acc])
+  }
 }
 
 pub fn breadth_first_solve(
