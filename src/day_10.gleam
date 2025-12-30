@@ -107,7 +107,7 @@ pub fn solve_joltages(m: Machine) {
     state.joltage_state == desired_dict
   }
 
-  echo breadth_first_solve(
+  breadth_first_solve(
     [search_state],
     next_states_fun,
     eval_fun,
@@ -154,22 +154,66 @@ pub fn solve_toggles(m: Machine) {
   )
 }
 
-/// assume a button that increments all value at once
-pub fn joltage_heuristic(s: JoltageSearchState, m: Machine) -> Int {
-  let dist =
-    m.joltage_requirements
-    |> list.index_map(fn(v, i) { #(i, v) })
-    |> list.fold(0, fn(acc, t) {
-      let #(key, v) = t
-      let d = v - { dict.get(s.joltage_state, key) |> result.unwrap(0) }
-      d + acc
-    })
-
-  dist / list.length(m.joltage_requirements)
-}
-
 pub type JoltageState {
   JoltageState(values: List(Int))
+}
+
+/// assume a button that increments all value at once
+pub fn joltage_heuristic(m: Machine) -> fn(JoltageState) -> Int {
+  fn(s: JoltageState) {
+    let assert Ok(zipped) = list.strict_zip(m.joltage_requirements, s.values)
+
+    let dist =
+      zipped
+      |> list.fold(0, fn(acc, t) {
+        let #(target, value) = t
+        target - value + acc
+      })
+
+    dist / list.length(m.joltage_requirements)
+  }
+}
+
+pub fn solve_joltage_with_a_star(
+  m: Machine,
+) -> Result(List(JoltageState), String) {
+  let init_values =
+    m.joltage_requirements
+    |> list.map(fn(_) { 0 })
+
+  let start_state = JoltageState(values: init_values)
+
+  let flat_buttons =
+    m.buttons
+    |> list.map(fn(b) {
+      init_values
+      |> list.index_map(fn(_v, i) {
+        case list.contains(b, i) {
+          True -> 1
+          False -> 0
+        }
+      })
+    })
+
+  let next_states_fun = fn(state: JoltageState) {
+    flat_buttons
+    |> list.map(fn(b) {
+      let new_values =
+        list.zip(b, state.values)
+        |> list.map(fn(t) {
+          let #(a, b) = t
+          a + b
+        })
+      JoltageState(new_values)
+    })
+  }
+
+  a_star_search(
+    start_state,
+    JoltageState(m.joltage_requirements),
+    joltage_heuristic(m),
+    next_states_fun,
+  )
 }
 
 pub fn a_star_search(
@@ -189,7 +233,7 @@ pub fn a_star_search(
   )
 }
 
-pub fn a_star_loop(
+fn a_star_loop(
   goal: s,
   h: fn(s) -> Int,
   next: fn(s) -> List(s),
@@ -209,10 +253,9 @@ pub fn a_star_loop(
           let new_states = next(state)
 
           // update g scores
-          new_states
-          |> list.fold(
-            #(g_scores, f_scores, came_from, open_queue),
-            fn(scores, s) {
+          let #(g_scores, f_scores, came_from, open_queue) =
+            new_states
+            |> list.fold(#(g_scores, f_scores, came_from, rest), fn(scores, s) {
               let #(g_scores, f_scores, came_from, open_queue) = scores
               let cur_g = dict.get(g_scores, s) |> result.unwrap(1_000_000_000)
               // TODO hardcoded dist measure
@@ -221,9 +264,11 @@ pub fn a_star_loop(
               case new_g < cur_g {
                 True -> {
                   let f_score = new_g + h(s)
-                  let updated_queue = case priority_queue.contains(rest, s) {
-                    True -> rest
-                    False -> rest |> priority_queue.insert(s, f_score)
+                  let updated_queue = case
+                    priority_queue.contains(open_queue, s)
+                  {
+                    True -> open_queue
+                    False -> open_queue |> priority_queue.insert(s, f_score)
                   }
                   #(
                     g_scores |> dict.insert(s, new_g),
@@ -236,9 +281,7 @@ pub fn a_star_loop(
                   #(g_scores, f_scores, came_from, open_queue)
                 }
               }
-            },
-          )
-          // update f scores
+            })
           a_star_loop(goal, h, next, open_queue, f_scores, g_scores, came_from)
         }
       }
