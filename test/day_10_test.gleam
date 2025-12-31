@@ -45,7 +45,7 @@ pub fn solve_a_star_test() {
   let machines = day_10.parse_instructions(test_input)
   let assert [m, ..] = machines
 
-  let assert Ok(solved_state) = day_10.solve_joltage_with_a_star(m)
-  assert 10 == list.length(solved_state)
-  echo solved_state
+  let path = day_10.solve_joltage_with_a_star(m)
+  assert 10 == list.length(path)
+  echo path
 }

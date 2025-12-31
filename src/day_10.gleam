@@ -6,7 +6,7 @@ import gleam/regexp
 import gleam/result
 import gleam/set.{type Set}
 import gleam/string
-import priority_queue.{type PriorityQueue}
+import search_algos
 
 import gleam/io
 
@@ -43,40 +43,16 @@ pub fn main() {
     <> int.to_string(sum_of_steps),
   )
 
-  let solutions = machines |> list.map(solve_joltages)
+  let solutions = machines |> list.map(solve_joltage_with_a_star)
   let sum_of_steps =
     solutions
-    |> result.values()
-    |> list.map(fn(s) { s.button_presses })
+    |> list.map(fn(s) { list.length(s) })
     |> int.sum
 
   io.println(
     "The total number of button presses for joltags is "
     <> int.to_string(sum_of_steps),
   )
-}
-
-pub fn backtrack_joltage(m: Machine) {
-  let next_states_fun = fn(state: JoltageSearchState) {
-    m.buttons
-    |> list.flat_map(fn(b) {
-      // try apply button many times
-      [
-        JoltageSearchState(
-          apply_joltage_button(state.joltage_state, b, 10),
-          state.button_presses + 10,
-        ),
-        JoltageSearchState(
-          apply_joltage_button(state.joltage_state, b, 5),
-          state.button_presses + 5,
-        ),
-        JoltageSearchState(
-          apply_joltage_button(state.joltage_state, b, 1),
-          state.button_presses + 1,
-        ),
-      ]
-    })
-  }
 }
 
 pub fn solve_joltages(m: Machine) {
@@ -107,7 +83,7 @@ pub fn solve_joltages(m: Machine) {
     state.joltage_state == desired_dict
   }
 
-  breadth_first_solve(
+  search_algos.breadth_first_solve(
     [search_state],
     next_states_fun,
     eval_fun,
@@ -145,7 +121,7 @@ pub fn solve_toggles(m: Machine) {
   let eval_fun = fn(state: ToggleSearchState) {
     state.indicator_state == m.desired_indicators
   }
-  breadth_first_solve(
+  search_algos.breadth_first_solve(
     [search_state],
     next_states_fun,
     eval_fun,
@@ -174,9 +150,8 @@ pub fn joltage_heuristic(m: Machine) -> fn(JoltageState) -> Int {
   }
 }
 
-pub fn solve_joltage_with_a_star(
-  m: Machine,
-) -> Result(List(JoltageState), String) {
+pub fn solve_joltage_with_a_star(m: Machine) -> List(JoltageState) {
+  echo m
   let init_values =
     m.joltage_requirements
     |> list.map(fn(_) { 0 })
@@ -204,140 +179,37 @@ pub fn solve_joltage_with_a_star(
           let #(a, b) = t
           a + b
         })
-      JoltageState(new_values)
+
+      let allowed =
+        new_values
+        |> list.zip(m.joltage_requirements)
+        |> list.all(fn(t) {
+          let #(value, target) = t
+          target >= value
+        })
+
+      case allowed {
+        True -> Ok(JoltageState(new_values))
+        False -> {
+          Error(Nil)
+        }
+      }
     })
+    |> result.values
   }
 
-  a_star_search(
-    start_state,
-    JoltageState(m.joltage_requirements),
-    joltage_heuristic(m),
-    next_states_fun,
+  let assert Ok(result) =
+    search_algos.a_star_search(
+      start_state,
+      JoltageState(m.joltage_requirements),
+      joltage_heuristic(m),
+      next_states_fun,
+    )
+
+  io.println(
+    "solved machine in " <> list.length(result) |> int.to_string <> " steps",
   )
-}
-
-pub fn a_star_search(
-  start: s,
-  goal: s,
-  h: fn(s) -> Int,
-  next: fn(s) -> List(s),
-) -> Result(List(s), String) {
-  a_star_loop(
-    goal,
-    h,
-    next,
-    priority_queue.new() |> priority_queue.insert(start, h(start)),
-    dict.new() |> dict.insert(start, h(start)),
-    dict.new() |> dict.insert(start, 0),
-    dict.new(),
-  )
-}
-
-fn a_star_loop(
-  goal: s,
-  h: fn(s) -> Int,
-  next: fn(s) -> List(s),
-  open_queue: PriorityQueue(s),
-  f_scores: Dict(s, Int),
-  g_scores: Dict(s, Int),
-  came_from: Dict(s, s),
-) -> Result(List(s), String) {
-  case priority_queue.is_empty(open_queue) {
-    True -> Error("no solution found")
-    False -> {
-      let assert Ok(#(state, rest)) = priority_queue.pop(open_queue)
-      case state == goal {
-        True -> Ok(trace_back_path(state, came_from))
-        False -> {
-          let assert Ok(curr_g) = dict.get(g_scores, state)
-          let new_states = next(state)
-
-          // update g scores
-          let #(g_scores, f_scores, came_from, open_queue) =
-            new_states
-            |> list.fold(#(g_scores, f_scores, came_from, rest), fn(scores, s) {
-              let #(g_scores, f_scores, came_from, open_queue) = scores
-              let cur_g = dict.get(g_scores, s) |> result.unwrap(1_000_000_000)
-              // TODO hardcoded dist measure
-              let new_g = curr_g + 1
-
-              case new_g < cur_g {
-                True -> {
-                  let f_score = new_g + h(s)
-                  let updated_queue = case
-                    priority_queue.contains(open_queue, s)
-                  {
-                    True -> open_queue
-                    False -> open_queue |> priority_queue.insert(s, f_score)
-                  }
-                  #(
-                    g_scores |> dict.insert(s, new_g),
-                    f_scores |> dict.insert(s, f_score),
-                    came_from |> dict.insert(s, state),
-                    updated_queue,
-                  )
-                }
-                False -> {
-                  #(g_scores, f_scores, came_from, open_queue)
-                }
-              }
-            })
-          a_star_loop(goal, h, next, open_queue, f_scores, g_scores, came_from)
-        }
-      }
-    }
-  }
-}
-
-fn trace_back_path(s: s, came_from: Dict(s, s)) -> List(s) {
-  trace_back_path_loop(s, came_from, [])
-}
-
-fn trace_back_path_loop(s, came_from, acc) {
-  case dict.get(came_from, s) {
-    Error(_) -> acc
-    Ok(new_s) -> trace_back_path_loop(new_s, came_from, [s, ..acc])
-  }
-}
-
-pub fn breadth_first_solve(
-  queue: List(s),
-  next_states_fun: fn(s) -> List(s),
-  eval_fun: fn(s) -> Bool,
-  hash_state_fun: fn(s) -> Int,
-  seen_state_hashes: Set(Int),
-) -> Result(s, String) {
-  case queue {
-    [] -> Error("No Solution possible")
-    [state, ..rest] -> {
-      case eval_fun(state) {
-        True -> Ok(state)
-        False -> {
-          let #(seen_hashes, new_states) =
-            next_states_fun(state)
-            |> list.fold(#(seen_state_hashes, []), fn(acc, s) {
-              let #(hashes, states) = acc
-              let hash = hash_state_fun(s)
-
-              case set.contains(hashes, hash) {
-                True -> #(hashes, states)
-                False -> #(set.insert(hashes, hash), [s, ..states])
-              }
-            })
-
-          let updated_queue = list.append(rest, new_states)
-
-          breadth_first_solve(
-            updated_queue,
-            next_states_fun,
-            eval_fun,
-            hash_state_fun,
-            seen_hashes,
-          )
-        }
-      }
-    }
-  }
+  result
 }
 
 fn hash_toggles(state: ToggleSearchState) {
@@ -441,12 +313,16 @@ pub fn parse_machine(str: String) {
       |> result.values
     })
 
-  let assert Ok(joltage_regex) = regexp.from_string("\\{[\\d,]+\\}")
+  let assert Ok(joltage_regex) = regexp.from_string("\\{([\\d,]+)\\}")
   let assert [requirement] =
     regexp.scan(joltage_regex, str)
     |> list.map(fn(m) {
-      m.content
-      |> string.to_graphemes
+      let assert [match] =
+        m.submatches
+        |> option.values
+
+      match
+      |> string.split(",")
       |> list.map(int.parse)
       |> result.values
     })
