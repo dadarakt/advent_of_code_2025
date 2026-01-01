@@ -43,12 +43,8 @@ pub fn max_rectangle_test() {
   assert 50 == day_9.maximal_rectangle(input)
 }
 
-pub fn print_tiles_test() {
-  let input = day_9.points_from_string(test_input)
-  //day_9.print_tiles(input)
-}
-
 pub fn max_rectangle_in_polygon_test() {
   let input = day_9.points_from_string(test_input)
-  // assert 24 == day_9.maximal_rectangle_in_polygon(input)
+  assert 50 == day_9.maximal_rectangle_in_polygon(input)
+  //assert 24 == day_9.maximal_rectangle_in_polygon(input)
 }

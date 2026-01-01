@@ -33,10 +33,6 @@ pub fn dir(line: OrthoLine2D) -> Dir {
   }
 }
 
-fn cross_product(a: Vec2D, b: Vec2D) -> Int {
-  a.x * b.y - b.x * a.y
-}
-
 pub type Orientation {
   Clockwise
   AntiClockwise

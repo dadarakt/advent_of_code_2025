@@ -1,4 +1,4 @@
-import gleam/dict.{type Dict}
+import gleam/dict
 import gleam/int
 import gleam/io
 import gleam/list
@@ -284,15 +284,6 @@ fn min_max_loop(l, order, min, max) {
       }
 
       min_max_loop(rest, order, new_min, new_max)
-    }
-  }
-}
-
-fn all_reactangles_from_points_loop(points, rectangles) {
-  case points {
-    [] -> rectangles
-    [first, ..rest] -> {
-      todo
     }
   }
 }

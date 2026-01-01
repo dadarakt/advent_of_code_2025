@@ -4,7 +4,7 @@ import gleam/list
 import gleam/option
 import gleam/regexp
 import gleam/result
-import gleam/set.{type Set}
+import gleam/set
 import gleam/string
 import search_algos
 
