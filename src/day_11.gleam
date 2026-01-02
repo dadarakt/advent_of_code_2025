@@ -33,67 +33,45 @@ pub fn main() {
 }
 
 pub fn count_paths_with_visits(devices: List(Device)) {
-  let start_device = find_device(devices, "svr")
   let adjacency_dict = build_adjacency_dict(devices)
-  count_paths_with_visits_loop(
-    [ConnectionState(start_device.id, False, False)],
-    adjacency_dict,
-    0,
-  )
+  count_paths_with_visits_loop("svr", False, False, adjacency_dict)
 }
 
 pub fn count_paths_with_visits_loop(
-  open_nodes: List(ConnectionState),
+  node: String,
+  seen_fft: Bool,
+  seen_dac: Bool,
   adjacency_dict: Dict(String, List(String)),
-  path_count: Int,
 ) {
-  case open_nodes {
-    [] -> path_count
-    [first, ..rest] -> {
-      case first.current_node {
-        "out" -> {
-          case first.visited_dac && first.visited_fft {
-            True ->
-              count_paths_with_visits_loop(rest, adjacency_dict, path_count + 1)
-            False ->
-              count_paths_with_visits_loop(rest, adjacency_dict, path_count)
-          }
-        }
-        "dac" -> {
-          let next_states =
-            dict.get(adjacency_dict, first.current_node)
-            |> result.unwrap([])
-            |> list.map(fn(id) {
-              ConnectionState(..first, current_node: id, visited_dac: True)
-            })
-          count_paths_with_visits_loop(
-            list.append(rest, next_states),
-            adjacency_dict,
-            path_count,
-          )
-        }
-
-        "fft" -> {
-          let next_states =
-            dict.get(adjacency_dict, first.current_node)
-            |> result.unwrap([])
-            |> list.map(fn(id) {
-              ConnectionState(..first, current_node: id, visited_fft: True)
-            })
-          count_paths_with_visits_loop(next_states, adjacency_dict, path_count)
-        }
-        _ -> {
-          let next_states =
-            dict.get(adjacency_dict, first.current_node)
-            |> result.unwrap([])
-            |> list.map(fn(id) { ConnectionState(..first, current_node: id) })
-          count_paths_with_visits_loop(
-            list.append(rest, next_states),
-            adjacency_dict,
-            path_count,
-          )
-        }
+  case node {
+    "out" -> {
+      case seen_fft && seen_dac {
+        True -> 1
+        False -> 0
       }
+    }
+    "dac" -> {
+      dict.get(adjacency_dict, node)
+      |> result.unwrap([])
+      |> list.fold(0, fn(acc, n) {
+        acc + count_paths_with_visits_loop(n, seen_fft, True, adjacency_dict)
+      })
+    }
+
+    "fft" -> {
+      dict.get(adjacency_dict, node)
+      |> result.unwrap([])
+      |> list.fold(0, fn(acc, n) {
+        acc + count_paths_with_visits_loop(n, True, seen_dac, adjacency_dict)
+      })
+    }
+    _ -> {
+      dict.get(adjacency_dict, node)
+      |> result.unwrap([])
+      |> list.fold(0, fn(acc, n) {
+        acc
+        + count_paths_with_visits_loop(n, seen_fft, seen_dac, adjacency_dict)
+      })
     }
   }
 }
