@@ -99,7 +99,7 @@ pub fn count_paths_with_visits_loop(
 }
 
 pub fn count_paths(devices: List(Device)) {
-  let start_device = find_start_device(devices)
+  let start_device = find_device(devices, "you")
   let adjacency_dict = build_adjacency_dict(devices)
   count_paths_loop([start_device.id], adjacency_dict, 0)
 }
@@ -140,14 +140,6 @@ fn find_device(devices: List(Device), id: String) -> Device {
     |> list.find(fn(d) { d.id == id })
 
   device
-}
-
-fn find_start_device(devices: List(Device)) -> Device {
-  let assert Ok(start_device) =
-    devices
-    |> list.find(fn(d) { d.id == "you" })
-
-  start_device
 }
 
 pub fn parse_devices(str: String) {
