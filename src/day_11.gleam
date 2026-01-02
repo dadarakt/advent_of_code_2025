@@ -2,9 +2,12 @@ import gleam/dict.{type Dict}
 import gleam/int
 import gleam/io
 import gleam/list
+import gleam/result
 import gleam/string
 
 import inputs
+
+const target = "out"
 
 pub type Device {
   Device(id: String, connections: List(String))
@@ -12,21 +15,40 @@ pub type Device {
 
 pub fn main() {
   let devices = inputs.input_for_day(11, parse_devices)
-  let assert Ok(start) = find_start_device(devices)
-  let assert Ok(target) = find_target_device(devices)
-  let adjacency_dict = build_adjacency_dict(devices)
+  let paths = count_paths(devices)
 
-  let paths = find_paths(adjacency_dict, start, target)
-
-  io.println("There are " <> list.length(paths) |> int.to_string <> " paths.")
+  io.println("There are " <> int.to_string(paths) <> " paths.")
 }
 
-pub fn find_paths(
+pub fn count_paths(devices: List(Device)) {
+  let start_device = find_start_device(devices)
+  let adjacency_dict = build_adjacency_dict(devices)
+  count_paths_loop([start_device.id], adjacency_dict, 0)
+}
+
+pub fn count_paths_loop(
+  open_nodes: List(String),
   adjacency_dict: Dict(String, List(String)),
-  start: Device,
-  target: Device,
+  path_count: Int,
 ) {
-  todo
+  case open_nodes {
+    [] -> path_count
+    [first, ..rest] -> {
+      case first == target {
+        True -> {
+          count_paths_loop(rest, adjacency_dict, path_count + 1)
+        }
+        False -> {
+          let new_open_nodes =
+            list.append(
+              rest,
+              dict.get(adjacency_dict, first) |> result.unwrap([]),
+            )
+          count_paths_loop(new_open_nodes, adjacency_dict, path_count)
+        }
+      }
+    }
+  }
 }
 
 pub fn build_adjacency_dict(devices: List(Device)) {
@@ -34,14 +56,12 @@ pub fn build_adjacency_dict(devices: List(Device)) {
   |> list.fold(dict.new(), fn(acc, d) { dict.insert(acc, d.id, d.connections) })
 }
 
-fn find_start_device(devices: List(Device)) -> Result(Device, Nil) {
-  devices
-  |> list.find(fn(d) { d.id == "you" })
-}
+fn find_start_device(devices: List(Device)) -> Device {
+  let assert Ok(start_device) =
+    devices
+    |> list.find(fn(d) { d.id == "you" })
 
-fn find_target_device(devices: List(Device)) {
-  devices
-  |> list.find(fn(d) { d.id == "out" })
+  start_device
 }
 
 pub fn parse_devices(str: String) {

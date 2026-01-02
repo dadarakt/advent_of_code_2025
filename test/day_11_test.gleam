@@ -14,6 +14,10 @@ iii: out"
 
 pub fn parsing_test() {
   let devices = day_11.parse_devices(test_input)
-  echo devices
   assert 10 == list.length(devices)
+}
+
+pub fn count_paths_test() {
+  let devices = day_11.parse_devices(test_input)
+  assert 5 == day_11.count_paths(devices)
 }
