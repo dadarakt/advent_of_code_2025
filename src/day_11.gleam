@@ -32,7 +32,18 @@ pub fn main() {
 
 pub fn count_paths_with_visits(devices: List(Device)) {
   let adjacency_dict = build_adjacency_dict(devices)
-  count_paths_with_visits_loop("svr", False, False, adjacency_dict)
+
+  // example routes:
+  // svr -> dac -> fft -> out == (svr -> dac) * (dac -> fft) * (fft -> out)
+  // svr -> fft -> dac -> out == (svr -> fft) * (fft -> dac) * (dac --> out)
+  let svr_to_dac = count_paths_loop("dac", ["svr"], adjacency_dict, 0) |> echo
+  let svr_to_fft = count_paths_loop("fft", ["svr"], adjacency_dict, 0) |> echo
+  let dac_to_fft = count_paths_loop("fft", ["dac"], adjacency_dict, 0) |> echo
+  let fft_to_dac = count_paths_loop("dac", ["fft"], adjacency_dict, 0) |> echo
+  let dac_to_out = count_paths_loop("out", ["dac"], adjacency_dict, 0) |> echo
+  let fft_to_out = count_paths_loop("out", ["fft"], adjacency_dict, 0) |> echo
+
+  svr_to_dac * dac_to_fft * fft_to_out + svr_to_fft * fft_to_dac * dac_to_out
 }
 
 pub fn count_paths_with_visits_loop(
