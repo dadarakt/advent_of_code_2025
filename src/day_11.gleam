@@ -31,31 +31,47 @@ pub fn main() {
   )
 }
 
-pub fn build_topological_ordering(devices: List(Device)) {
-  let adjacency_dict = build_adjacency_dict(devices)
+pub fn subgraph(
+  adjacency_dict: Dict(String, List(String)),
+  topological_order: List(String),
+  from: String,
+  to: String,
+) {
+  let subgraph_nodes =
+    topological_order
+    |> list.drop_while(fn(n) { n != from })
+    |> list.take_while(fn(n) { n != to })
+
+  adjacency_dict
+  |> dict.take(subgraph_nodes)
+}
+
+pub fn build_topological_order(adjacency_dict: Dict(String, List(String))) {
+  //let adjacency_dict = build_adjacency_dict(devices)
   let initial_edge_dict =
-    devices
+    adjacency_dict
+    |> dict.keys
     |> list.fold(dict.new(), fn(edge_dict, d) {
-      dict.insert(edge_dict, d.id, set.new())
+      dict.insert(edge_dict, d, set.new())
     })
 
   let incoming_edge_dict: Dict(String, Set(String)) =
-    devices
-    |> list.fold(initial_edge_dict, fn(edge_dict, d) {
-      d.connections
+    adjacency_dict
+    |> dict.to_list
+    |> list.fold(initial_edge_dict, fn(edge_dict, t) {
+      let #(n, edges) = t
+      edges
       |> list.fold(edge_dict, fn(edge_dict, c) {
         let s =
           dict.get(edge_dict, c)
           |> result.unwrap(set.new())
-          |> set.insert(d.id)
+          |> set.insert(n)
 
         dict.insert(edge_dict, c, s)
       })
     })
 
-  echo incoming_edge_dict
-
-  let s =
+  let no_incoming_edges =
     incoming_edge_dict
     |> dict.to_list
     |> list.filter_map(fn(t) {
@@ -66,7 +82,7 @@ pub fn build_topological_ordering(devices: List(Device)) {
       }
     })
 
-  topo_loop(s, [], adjacency_dict, incoming_edge_dict)
+  topo_loop(no_incoming_edges, [], adjacency_dict, incoming_edge_dict)
 }
 
 fn topo_loop(s, l, adjacency_dict, edge_dict) {
@@ -102,16 +118,41 @@ fn topo_loop(s, l, adjacency_dict, edge_dict) {
 
 pub fn count_paths_with_visits(devices: List(Device)) {
   let adjacency_dict = build_adjacency_dict(devices)
+  let assert Ok(topological_order) = build_topological_order(adjacency_dict)
+  echo topological_order
+  echo "-----------------------------------------------"
 
   // example routes:
   // svr -> dac -> fft -> out == (svr -> dac) * (dac -> fft) * (fft -> out)
   // svr -> fft -> dac -> out == (svr -> fft) * (fft -> dac) * (dac --> out)
-  let svr_to_dac = count_paths_loop("dac", ["svr"], adjacency_dict, 0)
-  let svr_to_fft = count_paths_loop("fft", ["svr"], adjacency_dict, 0)
-  let dac_to_fft = count_paths_loop("fft", ["dac"], adjacency_dict, 0)
-  let fft_to_dac = count_paths_loop("dac", ["fft"], adjacency_dict, 0)
-  let dac_to_out = count_paths_loop("out", ["dac"], adjacency_dict, 0)
-  let fft_to_out = count_paths_loop("out", ["fft"], adjacency_dict, 0)
+  let g_svr_to_dac = subgraph(adjacency_dict, topological_order, "svr", "dac")
+  let g_svr_to_fft = subgraph(adjacency_dict, topological_order, "svr", "fft")
+  let g_dac_to_fft = subgraph(adjacency_dict, topological_order, "dac", "fft")
+  let g_fft_to_dac = subgraph(adjacency_dict, topological_order, "fft", "dac")
+  let g_dac_to_out = subgraph(adjacency_dict, topological_order, "dac", "out")
+  let g_fft_to_out = subgraph(adjacency_dict, topological_order, "fft", "out")
+  echo "============="
+  echo adjacency_dict |> dict.size
+  echo g_svr_to_dac |> dict.size
+  echo g_svr_to_fft |> dict.size
+  echo g_dac_to_fft |> dict.size
+  echo g_fft_to_dac |> dict.size
+  echo g_dac_to_out |> dict.size
+  echo g_fft_to_out |> dict.size
+  echo "============="
+
+  let svr_to_dac = count_paths_loop("dac", ["svr"], g_svr_to_dac, 0)
+  echo "~~~~~~~~~~~~~"
+  let svr_to_fft = count_paths_loop("fft", ["svr"], g_svr_to_fft, 0)
+  echo "~~~~~~~~~~~~~"
+  let dac_to_fft = count_paths_loop("fft", ["dac"], g_dac_to_fft, 0)
+  echo "~~~~~~~~~~~~~"
+  let fft_to_dac = count_paths_loop("dac", ["fft"], g_fft_to_dac, 0)
+  echo "~~~~~~~~~~~~~"
+  let dac_to_out = count_paths_loop("out", ["dac"], g_dac_to_out, 0)
+  echo "~~~~~~~~~~~~~"
+  let fft_to_out = count_paths_loop("out", ["fft"], g_fft_to_out, 0)
+  echo "~~~~~~~~~~~~~"
 
   svr_to_dac * dac_to_fft * fft_to_out + svr_to_fft * fft_to_dac * dac_to_out
 }

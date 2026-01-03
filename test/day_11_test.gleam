@@ -43,7 +43,8 @@ pub fn count_paths_with_visits_test() {
 
 pub fn topological_sort_test() {
   let devices = day_11.parse_devices(test_input_part_2)
-  let assert Ok(order) = day_11.build_topological_ordering(devices)
+  let adjacency_dict = day_11.build_adjacency_dict(devices)
+  let assert Ok(order) = day_11.build_topological_order(adjacency_dict)
   let assert Ok("svr") = list.first(order)
   let assert Ok("out") = list.last(order)
 }
