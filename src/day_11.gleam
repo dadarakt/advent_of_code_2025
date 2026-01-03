@@ -7,8 +7,6 @@ import gleam/string
 
 import inputs
 
-const target = "out"
-
 pub type Device {
   Device(id: String, connections: List(String))
 }
@@ -79,10 +77,11 @@ pub fn count_paths_with_visits_loop(
 pub fn count_paths(devices: List(Device)) {
   let start_device = find_device(devices, "you")
   let adjacency_dict = build_adjacency_dict(devices)
-  count_paths_loop([start_device.id], adjacency_dict, 0)
+  count_paths_loop("out", [start_device.id], adjacency_dict, 0)
 }
 
 pub fn count_paths_loop(
+  target: String,
   open_nodes: List(String),
   adjacency_dict: Dict(String, List(String)),
   path_count: Int,
@@ -92,7 +91,7 @@ pub fn count_paths_loop(
     [first, ..rest] -> {
       case first == target {
         True -> {
-          count_paths_loop(rest, adjacency_dict, path_count + 1)
+          count_paths_loop(target, rest, adjacency_dict, path_count + 1)
         }
         False -> {
           let new_open_nodes =
@@ -100,7 +99,7 @@ pub fn count_paths_loop(
               rest,
               dict.get(adjacency_dict, first) |> result.unwrap([]),
             )
-          count_paths_loop(new_open_nodes, adjacency_dict, path_count)
+          count_paths_loop(target, new_open_nodes, adjacency_dict, path_count)
         }
       }
     }
