@@ -40,3 +40,10 @@ pub fn count_paths_with_visits_test() {
   let devices = day_11.parse_devices(test_input_part_2)
   assert 2 == day_11.count_paths_with_visits(devices)
 }
+
+pub fn topological_sort_test() {
+  let devices = day_11.parse_devices(test_input_part_2)
+  let assert Ok(order) = day_11.build_topological_ordering(devices)
+  let assert Ok("svr") = list.first(order)
+  let assert Ok("out") = list.last(order)
+}
